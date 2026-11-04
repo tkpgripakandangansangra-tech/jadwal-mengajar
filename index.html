@@ -82,6 +82,10 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #sIdent{background:linear-gradient(180deg,#032C20 0%,#064E3B 60%,#0A5C43 100%);margin:-16px -14px 12px;padding:16px 14px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,.35);box-shadow:0 4px 10px rgba(0,0,0,.35);flex-shrink:0}
 .sLogo{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#0B1220}
 .sLogo.default{display:inline-flex;align-items:center;justify-content:center;font-size:34px}
+.fotoWrap{position:relative;width:64px;height:64px;margin:0 auto;cursor:pointer}
+.fotoWrap .sLogo{display:block}
+.btnKamera{position:absolute;right:-5px;bottom:-5px;width:27px;height:27px;border-radius:50%;border:2px solid #064E3B;background:linear-gradient(135deg,#F59E0B,#F97316);color:#fff;font-size:13px;cursor:pointer;padding:0;line-height:1}
+.btnKamera:hover{filter:brightness(1.15)}
 .sNama{font-family:'Baloo 2';font-size:15px;margin-top:4px;color:#fff}
 #sIdent .kecil{color:rgba(255,255,255,.9)}
 #menu{display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;min-height:0;padding-right:2px}
@@ -111,7 +115,10 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #menu .menuBtn[data-modul="keluar"]{background:linear-gradient(135deg,#1F2937,#475569)}
 #kolomUtama{flex:1;min-width:0}
 #atas{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:linear-gradient(90deg,#064E3B,#1E3A8A);box-shadow:var(--bayang);position:sticky;top:0;z-index:40}
-#atasSekolah{text-align:center;flex:1;min-width:0}
+#atasSekolah{text-align:left;flex:1;min-width:0}
+.atasKop{display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
+.atasLogo{width:52px;height:52px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.15);flex-shrink:0}
+.atasLogo.default{display:flex;align-items:center;justify-content:center;font-size:26px}
 .atasBaris1{font-family:'Baloo 2';font-size:24px;font-weight:700;color:#fff;line-height:1.15}
 .atasBaris2{font-size:16px;color:rgba(255,255,255,.92)}
 .atasBaris3{font-size:16px;font-weight:600;color:#FDE68A}
@@ -864,12 +871,16 @@ function tampilApp(){
   el('layarWali').hidden = true;
   el('layarApp').hidden = false;
   el('sIdent').innerHTML =
-    (SEKOLAH.LogoSekolah ? `<img src="${SEKOLAH.LogoSekolah}" class="sLogo">` : `<div class="sLogo default">🏫</div>`) +
-    `<div class="sNama">${esc(SEKOLAH.NamaSekolah||'Sekolah')}</div>
-     <div class="kecil">${esc(AKUN.NamaPengguna||'')} · ${labelPeran(AKUN.Peran)}</div>`;
-  el('atasSekolah').innerHTML = `<div class="atasBaris1">${esc(SEKOLAH.NamaSekolah||'Sekolah')}</div>
-  <div class="atasBaris2">${esc(SEKOLAH.AlamatSekolah||'Alamat belum diisi — atur di menu Pengaturan')}</div>
-  <div class="atasBaris3">Tahun Ajaran ${esc(SEKOLAH.TahunAjaran||'-')}</div>`;
+    `<div class="fotoWrap" id="sFotoWrap"><div class="sLogo default">👤</div></div>
+     <div class="sNama">${esc(AKUN.NamaPengguna||'')}</div>
+     <div class="kecil">${labelPeran(AKUN.Peran)}</div>`;
+  el('atasSekolah').innerHTML = `<div class="atasKop">
+    ${SEKOLAH.LogoSekolah ? `<img src="${SEKOLAH.LogoSekolah}" class="atasLogo">` : `<div class="atasLogo default">🏫</div>`}
+    <div style="min-width:0">
+      <div class="atasBaris1">${esc(SEKOLAH.NamaSekolah||'Sekolah')}</div>
+      <div class="atasBaris2">${esc(SEKOLAH.AlamatSekolah||'Alamat belum diisi — atur di menu Pengaturan')}</div>
+      <div class="atasBaris3">Tahun Ajaran ${esc(SEKOLAH.TahunAjaran||'-')}</div>
+    </div></div>`;
   const w = el('menu'); w.innerHTML = '';
   (MENU[AKUN.Peran]||[]).forEach(m=>{
     const b = document.createElement('button');
@@ -927,7 +938,7 @@ onAuthStateChanged(auth, async u=>{
   try{
     if(!await gerbangBio(u)) return;
     await mulaiSesi(u);
-    await sisiProfilGuru();
+    await sisiProfil();
   }catch(err){
     try{ await signOut(auth); }catch(_){}
     pesanAuth('⛔ '+teksErr(err));
@@ -2313,41 +2324,71 @@ async function gerbangBio(u){
   }
 }
 
-async function sisiProfilGuru(){
+async function simpanFotoProfil(dataUrl, kosong){
+  const emailKu = (AKUN.Email||'').toLowerCase();
+  const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
+  const d0 = bb.docs[0];
+  const val = kosong ? '' : dataUrl;
+  if(d0){
+    await updateDoc(doc(db,'guru_biodata',d0.id), {FotoProfil:val, DiperbaruiPada:serverTimestamp()});
+  } else if(!kosong){
+    await setDoc(doc(db,'guru_biodata',emailKu), {SekolahId:AKUN.SekolahId, Email:emailKu, Nama:AKUN.NamaPengguna||'', Jabatan:labelPeran(AKUN.Peran).toUpperCase(), FotoProfil:val, Sumber:'Profil Sendiri', DibuatPada:serverTimestamp(), DiperbaruiPada:serverTimestamp()});
+  }
+}
+
+async function sisiProfil(){
   try{
-    if(!AKUN || AKUN.Peran!=='guru' || !el('sIdent')) return;
-    const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',(AKUN.Email||'').toLowerCase()), where('SekolahId','==',AKUN.SekolahId)));
+    if(!AKUN || !el('sIdent')) return;
+    const emailKu = (AKUN.Email||'').toLowerCase();
+    const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
     const x = bb.docs[0] && bb.docs[0].data();
     let foto = (x && x.FotoProfil) ? x.FotoProfil : ((x && x.LinkFoto) ? gbUrlFoto(x.LinkFoto) : '');
     if(!foto && x){
-      const qd = await getDocs(query(collection(db,'guru_dok'), where('Email','==',(AKUN.Email||'').toLowerCase()), where('SekolahId','==',AKUN.SekolahId)));
+      const qd = await getDocs(query(collection(db,'guru_dok'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
       const f = qd.docs.map(d=>d.data()).find(y=>y.Tipe==='foto');
       if(f) foto = f.Data||'';
     }
     const box = el('sIdent');
     box.classList.add('klikProfil');
     box.innerHTML = `
-      ${foto ? `<img src="${esc(foto)}" class="sLogo">` : '<div class="sLogo default">👩‍🏫</div>'}
-      <div class="sNama">${esc(AKUN.NamaPengguna||'Guru')}</div>
-      <div class="kecil">👤 profil &amp; biodata — ketuk di sini</div>`;
+      <div class="fotoWrap" id="sFotoWrap">
+        ${foto ? `<img src="${esc(foto)}" class="sLogo">` : '<div class="sLogo default">👤</div>'}
+        <button type="button" class="btnKamera" id="sKamera" title="Ganti foto dari galeri HP">📷</button>
+      </div>
+      <input type="file" id="sFileFoto" accept="image/*" hidden>
+      <div class="sNama">${esc(AKUN.NamaPengguna||'')}</div>
+      <div class="kecil">${labelPeran(AKUN.Peran)}</div>
+      <div style="margin-top:8px;text-align:right"><button type="button" class="btn kecil" id="sEditProfil">✏️ Edit Profil</button></div>`;
     box.onclick = ()=>modProfilGuru();
+    el('sKamera').onclick = e=>{ e.stopPropagation(); el('sFileFoto').click(); };
+    el('sEditProfil').onclick = e=>{ e.stopPropagation(); modProfilGuru(); };
+    el('sFileFoto').onchange = async e2=>{
+      const file = e2.target.files[0]; if(!file) return;
+      toast('⏳ Memproses foto…');
+      try{
+        const kecil = await gbKompresFoto(file, 256, .72);
+        await simpanFotoProfil(kecil, false);
+        toast('✅ Foto profil diperbarui'); await sisiProfil();
+      }catch(err){ toast('⛔ '+teksErr(err)); }
+      e2.target.value='';
+    };
   }catch(_){}
 }
 
 async function modProfilGuru(){
   const isi = el('isi');
-  const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',(AKUN.Email||'').toLowerCase()), where('SekolahId','==',AKUN.SekolahId)));
+  const emailKu = (AKUN.Email||'').toLowerCase();
+  const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
   const d0 = bb.docs[0];
-  if(!d0){ isi.innerHTML = '<div class="kartu">Biodata belum tersedia.</div>'; return; }
-  PROFIL.docId = d0.id; PROFIL.data = d0.data();
+  PROFIL.docId = d0 ? d0.id : ''; PROFIL.data = d0 ? d0.data() : null;
   const x = PROFIL.data;
   const doks = {};
-  const qd = await getDocs(query(collection(db,'guru_dok'), where('Email','==',(AKUN.Email||'').toLowerCase()), where('SekolahId','==',AKUN.SekolahId)));
+  const qd = await getDocs(query(collection(db,'guru_dok'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
   qd.docs.forEach(d=>{ const y = d.data(); if(y.Tipe) doks[y.Tipe] = y.Data||''; });
   const barisP = (l,v)=>`<tr><th style="text-align:left;width:180px;background:rgba(148,163,184,.08)">${l}</th><td>${v||'—'}</td></tr>`;
   const gam = t => doks[t] ? `<img src="${esc(doks[t])}" style="width:150px;border-radius:8px">` : '';
-  const fotoUtama = doks.foto || (x.LinkFoto ? gbUrlFoto(x.LinkFoto) : '');
-  const tampil = `
+  const fotoUtama = doks.foto || ((x && x.LinkFoto) ? gbUrlFoto(x.LinkFoto) : '');
+  const tampil = x ? `
     ${fotoUtama?`<p><img src="${esc(fotoUtama)}" style="width:110px;border-radius:10px"></p>`:''}
     <table class="tabelMini">
       ${barisP('NUG',esc(x.NUG))}${barisP('Nama Lengkap',esc(x.Nama))}${barisP('Gelar Akademik',esc(x.Gelar||''))}${barisP('Jenis Kelamin',esc(x.JK))}
@@ -2369,23 +2410,34 @@ async function modProfilGuru(){
     <table class="tabelMini">
       ${barisP('Pas Foto',gam('foto'))}${barisP('Foto KTP',gam('ktp'))}${barisP('Foto KK',gam('kk'))}
       ${barisP('Ijazah',gam('ijazah'))}${barisP('Transkip Nilai',gam('transkrip'))}${barisP('SK Pengangkatan',gam('sk'))}
-    </table>`;
-  const fotoP = x.FotoProfil || doks.foto || (x.LinkFoto ? gbUrlFoto(x.LinkFoto) : '');
+    </table>` : '';
+  const fotoP = (x && x.FotoProfil) || doks.foto || ((x && x.LinkFoto) ? gbUrlFoto(x.LinkFoto) : '');
   isi.innerHTML = `<h1 class="judul">👤 Profil Saya</h1>
     <div class="kartu">
       <div class="barisAtas" style="align-items:flex-start">
-        ${fotoP?`<img src="${esc(fotoP)}" class="sLogo" style="width:72px;height:72px">`:'<div class="sLogo default" style="width:72px;height:72px">👩‍🏫</div>'}
+        ${fotoP?`<img src="${esc(fotoP)}" class="sLogo" style="width:72px;height:72px">`:'<div class="sLogo default" style="width:72px;height:72px">👤</div>'}
         <div style="flex:1">
           <h3 style="margin:0 0 6px">📷 Foto Profil (menu samping)</h3>
           <p class="kecil">Foto ini hanya tampil di menu samping — <b>tidak mengubah</b> dokumen resmi biodata.</p>
           <input type="file" id="pFileFoto" accept="image/*" hidden>
           <button type="button" class="btn kecil" id="pGantiFoto">📷 Ganti Foto Profil</button>
-          ${x.FotoProfil?'<button type="button" class="btn kecil bahaya" id="pHapusFoto">🗑 Kembalikan ke Foto Resmi</button>':''}
+          ${(x && x.FotoProfil)?'<button type="button" class="btn kecil bahaya" id="pHapusFoto">🗑 Kembalikan ke Foto Resmi</button>':''}
         </div>
       </div>
     </div>
-    <div class="kartu"><h3>📄 Biodata Saya</h3>${tampil}
-      <div class="barisTombol"><button type="button" class="btn utama" id="pEditBio">✏️ Edit Biodata</button><button type="button" class="btn" id="pCetakBio">🖨️ Cetak Biodata</button></div>
+    <div class="kartu"><h3>🔐 Akun Saya</h3>
+      <table class="tabelMini">
+        ${barisP('Nama',esc(AKUN.NamaPengguna||''))}${barisP('E-mail',esc(AKUN.Email||''))}
+        ${barisP('Peran',labelPeran(AKUN.Peran))}${barisP('Status',esc(AKUN.StatusAkun||'aktif'))}
+      </table>
+      <div class="barisTombol"><button type="button" class="btn" id="pGantiSandi">🔑 Ubah Kata Sandi</button></div>
+      <p class="kecil">Tautan ubah kata sandi dikirim ke e-mail Anda — cek kotak masuk &amp; folder spam.</p>
+    </div>
+    <div class="kartu"><h3>📄 Biodata Saya</h3>
+      ${x ? tampil + `
+      <div class="barisTombol"><button type="button" class="btn utama" id="pEditBio">✏️ Edit Biodata</button><button type="button" class="btn" id="pCetakBio">🖨️ Cetak Biodata</button></div>`
+        : `<p class="kecil">Biodata Anda belum diisi. Lengkapi agar data kepegawaian &amp; keluarga tersimpan rapi.</p>
+      <div class="barisTombol"><button type="button" class="btn utama" id="pIsiBio">✏️ Isi Biodata Sekarang</button></div>`}
     </div>`;
   el('pGantiFoto').onclick = ()=>el('pFileFoto').click();
   el('pFileFoto').onchange = async e2=>{
@@ -2393,16 +2445,22 @@ async function modProfilGuru(){
     toast('⏳ Memproses foto…');
     try{
       const kecil = await gbKompresFoto(file, 256, .72);
-      await updateDoc(doc(db,'guru_biodata',PROFIL.docId), {FotoProfil:kecil, DiperbaruiPada:serverTimestamp()});
-      toast('✅ Foto profil diperbarui'); await sisiProfilGuru(); modProfilGuru();
+      await simpanFotoProfil(kecil, false);
+      toast('✅ Foto profil diperbarui'); await sisiProfil(); modProfilGuru();
     }catch(err){ toast('⛔ '+teksErr(err)); }
     e2.target.value='';
   };
   isi.onclick = async e=>{
     if(e.target.closest('#pEditBio')){ guruBioForm(PROFIL.data, PROFIL.docId, 'sendiri'); return; }
-    if(e.target.closest('#pCetakBio')){ cetakJadwal('BIODATA GURU — '+(x.Nama||''), tampil, 'Kepala Sekolah', namaKs()); return; }
+    if(e.target.closest('#pIsiBio')){ guruBioForm(null, '', 'sendiri'); return; }
+    if(e.target.closest('#pGantiSandi')){
+      try{ await denganBatas(sendPasswordResetEmail(auth, AKUN.Email||''), 25000); toast('✅ Tautan ubah kata sandi dikirim ke '+(AKUN.Email||'')); }
+      catch(err){ toast('⛔ '+teksErr(err)); }
+      return;
+    }
+    if(e.target.closest('#pCetakBio')){ cetakJadwal('BIODATA GURU — '+((x&&x.Nama)||''), tampil, 'Kepala Sekolah', namaKs()); return; }
     if(e.target.closest('#pHapusFoto')){
-      try{ await updateDoc(doc(db,'guru_biodata',PROFIL.docId), {FotoProfil:'', DiperbaruiPada:serverTimestamp()}); toast('✅ Dikembalikan ke foto resmi'); await sisiProfilGuru(); modProfilGuru(); }catch(err){ toast('⛔ '+teksErr(err)); }
+      try{ await simpanFotoProfil('', true); toast('✅ Dikembalikan ke foto resmi'); await sisiProfil(); modProfilGuru(); }catch(err){ toast('⛔ '+teksErr(err)); }
     }
   };
 }
@@ -2507,7 +2565,7 @@ async function guruBioForm(data, docId, mode, wadah){
     v('gbSuamiNama',data.SuamiNama); v('gbSuamiNik',data.SuamiNik); v('gbSuamiTgl',data.SuamiTglLahir); v('gbSuamiKerja',data.SuamiPekerjaan);
     v('gbIbuNama',data.IbuNama); v('gbIbuNik',data.IbuNik); v('gbIbuTgl',data.IbuTglLahir); v('gbIbuKerja',data.IbuPekerjaan);
   } else {
-    if(kirim==='gerbang'){
+    if(kirim==='gerbang'||kirim==='sendiri'){
       v('gbNama', AKUN.NamaPengguna||'');
       el('gbJabatan').value = ({operator:'OPERATOR', kepala_sekolah:'KEPALA SEKOLAH', guru:'GURU'})[AKUN.Peran] || '';
       v('gbEmail', (AKUN.Email||'').toLowerCase());
@@ -2615,13 +2673,14 @@ async function guruBioForm(data, docId, mode, wadah){
         sedangMendaftar = false;
         const ov = document.getElementById('daftarBio'); if(ov) ov.remove();
         await mulaiSesi(u);
-        if(u.emailVerified && peran==='guru') await sisiProfilGuru();
+        if(u.emailVerified) await sisiProfil();
         toast('🎉 Pendaftaran selesai — NUG Anda: '+payload.NUG);
         return;
       }
+      if(kirim==='sendiri') payload.Email = (AKUN.Email||'').toLowerCase();
       const emailSimpan = payload.Email;
       if(edit){
-        payload.NUG = data.NUG;
+        payload.NUG = (data && data.NUG) ? data.NUG : await ambilNugBaru();
         await updateDoc(doc(db,'guru_biodata',GB.docId), {...payload, DiperbaruiPada:serverTimestamp()});
         toast('✅ Biodata diperbarui');
       } else {
@@ -2634,7 +2693,7 @@ async function guruBioForm(data, docId, mode, wadah){
       }
       if(kirim==='gerbang'){
         const ov = document.getElementById('gerbangBio'); if(ov) ov.remove();
-        await sisiProfilGuru();
+        await sisiProfil();
       } else if(kirim==='sendiri'){ modProfilGuru(); }
       else { bukaModul('guru'); }
     }catch(err){
