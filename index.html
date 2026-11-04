@@ -166,6 +166,7 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .tabelMini{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
 .tabelMini th,.tabelMini td{border:1px solid var(--garis);padding:5px 8px;text-align:left}
 .tabelMini th{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff}
+.geserX{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
 .notifItem{padding:8px;border-bottom:1px solid var(--garis);font-size:14px}
 .notifItem.baru{border-left:4px solid #34D399;background:rgba(16,185,129,.12)}
 .barisTombol{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
@@ -307,8 +308,8 @@ const db = getFirestore(app);
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
-  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
-  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['statIjin','📊','#059669','Statistik Ijin'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
+  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
+  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['statIjin','📊','#059669','Statistik Ijin'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
   guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['lisanSaya','🎤','#F97316','Ujian Lisan'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
@@ -337,7 +338,7 @@ function pesanAuth(t, sukses){
 }
 function teksErr(e){
   const c = (e&&e.code)||''; const m = (e&&e.message)||String(e);
-  if(c.indexOf('permission-denied')>-1 || m.indexOf('permission-denied')>-1) return 'Akses Firestore ditolak — periksa rules v8.1 di Firebase Console.';
+  if(c.indexOf('permission-denied')>-1 || m.indexOf('permission-denied')>-1) return 'Akses Firestore ditolak — periksa rules v8.2 di Firebase Console.';
   if(c.indexOf('invalid-credential')>-1 || c.indexOf('wrong-password')>-1 || c.indexOf('user-not-found')>-1) return 'E-mail atau sandi salah.';
   if(c.indexOf('email-already-in-use')>-1) return 'E-mail sudah dipakai — sistem akan melengkapi pendaftaran otomatis.';
   if(c.indexOf('weak-password')>-1) return 'Sandi minimal 6 karakter.';
@@ -982,7 +983,7 @@ async function bukaModul(n){
 const MODUL = {
   beranda: modBeranda, susun: modSusun, ujian: modUjian, kelas: modKelas, guru: modGuru, laporan: modLaporan,
   pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
-  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, statIjin: modStatIjin, pelajaran: modPelajaran,
+  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, statIjin: modStatIjin, pelajaran: modPelajaran, siswa: modSiswa,
   lisan: async ()=>{ await modLisan('lisan'); },
   lisanSaya: async ()=>{ await modLisan('lisanSaya'); },
   alatMigrasi: modMigrasi
@@ -3242,7 +3243,7 @@ function cetakSurat(pg){
 }
 
 /* ---------- ujian lisan ---------- */
-let LIS = {kelasId:'', baris:[], lama:null, tersimpan:'[]'};
+let LIS = {kelasId:'', baris:[], lama:null, tersimpan:'[]', mp:[], mapelAktif:'', materiFokus:null};
 let UJ_TAB = 'uts';
 
 function lisTeks(iso){
@@ -3308,14 +3309,19 @@ async function modLisan(m){
     tugas.sort((a,b)=> (a.Tanggal||'').localeCompare(b.Tanggal||'') || (Number(a.Meja)||0)-(Number(b.Meja)||0));
     isi.innerHTML = `<h1 class="judul">🎤 Ujian Lisan</h1>
       <div class="kartu"><h3>🧑‍🏫 Jadwal Saya sebagai Penguji</h3>
-      ${tugas.length ? `<table class="tabelMini"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu (WIB)</th><th>Pos / Meja</th><th>Materi Ujian</th><th>Kelas</th><th>Ruangan</th></tr>
-        ${tugas.map((b,i)=>`<tr><td>${i+1}</td><td>${esc(lisTeks(b.Tanggal))}</td><td>${esc(lisWaktu(b))}</td><td>Meja ${esc(b.Meja||'')}</td><td><b>${esc(b.Materi||'')}</b></td><td>${esc(b.kelas)}</td><td>${esc(b.Ruangan||'')}</td></tr>`).join('')}</table>`
+      ${tugas.length ? `<div class="geserX"><table class="tabelMini" style="min-width:780px"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu (WIB)</th><th>Pos / Meja</th><th>Materi Ujian</th><th>Kelas</th><th>Ruangan</th></tr>
+        ${tugas.map((b,i)=>`<tr><td>${i+1}</td><td>${esc(lisTeks(b.Tanggal))}</td><td>${esc(lisWaktu(b))}</td><td>Meja ${esc(b.Meja||'')}</td><td><b>${esc(b.Materi||'')}</b></td><td>${esc(b.kelas)}</td><td>${esc(b.Ruangan||'')}</td></tr>`).join('')}</table></div>`
         : '<p class="kecil">Belum ada tugas penguji ujian lisan untuk Anda.</p>'}
       </div>`;
     return;
   }
   const daftarKelas = await ambilKelas();
   const bisaEdit = AKUN.Peran==='operator';
+  try{
+    const mpS = await getDocs(query(collection(db,'mapel_sekolah'), where('SekolahId','==',AKUN.SekolahId)));
+    LIS.mp = mpS.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>((Number(a.Urutan)||0)-(Number(b.Urutan)||0)) || (a.Nama||'').localeCompare(b.Nama||''));
+  }catch(_){ LIS.mp = []; }
+  if(!LIS.mp.some(m=>m.Nama===LIS.mapelAktif)) LIS.mapelAktif = (LIS.mp[0]||{}).Nama || '';
   if(!daftarKelas.some(k=>k.id===LIS.kelasId)) LIS.kelasId = (daftarKelas[0]||{}).id || '';
   if(!LIS.kelasId){
     isi.innerHTML = `<h1 class="judul">🎤 Ujian Lisan</h1><div class="kartu"><p class="kecil">Belum ada kelas — buat dulu di menu Daftar Kelas.</p></div>`;
@@ -3337,17 +3343,24 @@ async function modLisan(m){
         <td><input type="date" class="lisIn" data-i="${i}" data-f="Tanggal" value="${esc(b.Tanggal||'')}"></td>
         <td><input type="time" class="lisIn" data-i="${i}" data-f="Mulai" value="${esc(b.Mulai||'')}" style="width:64px;display:inline-block"> – <input type="time" class="lisIn" data-i="${i}" data-f="Selesai" value="${esc(b.Selesai||'')}" style="width:64px;display:inline-block"></td>
         <td><input type="number" min="1" class="lisIn" data-i="${i}" data-f="Meja" value="${esc(b.Meja||'')}"></td>
-        <td><input type="text" class="lisIn" data-i="${i}" data-f="Materi" value="${esc(b.Materi||'')}" placeholder="mis. MUHADATSAH & QAWAID" style="text-transform:uppercase"></td>
+        <td><input type="text" class="lisIn" data-i="${i}" data-f="Materi" value="${esc(b.Materi||'')}" placeholder="mis. MUHADATSAH & QAWAID" list="lisMateri" style="text-transform:uppercase"></td>
         <td><select class="lisIn" data-i="${i}" data-f="PengujiEmail"><option value="">— pilih penguji —</option>${G.map(g=>`<option value="${esc(g.EmailPengguna)}"${g.EmailPengguna===b.PengujiEmail?' selected':''}>${esc(g.NamaPengguna)}</option>`).join('')}</select></td>
         <td><input type="text" class="lisIn" data-i="${i}" data-f="Ruangan" value="${esc(b.Ruangan||'')}" list="lisRuang"></td>
         <td><button type="button" class="btnIkon" data-lisdup="${i}" title="Duplikat tanggal & waktu ke meja berikutnya">⧉</button><button type="button" class="btnIkon" data-lisdel="${i}" title="Hapus baris" style="color:#F87171">🗑</button></td>
       </tr>`).join('');
+      const mpChips = LIS.mp.map((m,i)=>`<button type="button" class="chipHari${m.Nama===LIS.mapelAktif?' on':''}" data-lismapel="${i}">${esc(m.Nama)}</button>`).join('');
+      const mt = ((LIS.mp.find(m=>m.Nama===LIS.mapelAktif)||{}).Materi)||[];
+      const mtChips = mt.map(x=>`<button type="button" class="chipHari" data-lismateripakai="${esc(x)}">${esc(x)}</button>`).join('');
       dalam = `<div class="barisAtas">${chips}<button type="button" class="btn utama kecil" data-listambah="1">➕ Tambah Baris</button></div>
-        ${LIS.baris.length ? `<table class="tabelMini"><tr><th style="width:28px">No</th><th>Hari, Tanggal</th><th style="width:132px">Waktu (WIB)</th><th style="width:52px">Meja</th><th>Materi Ujian</th><th style="min-width:150px">Nama Penguji</th><th>Ruangan</th><th style="width:58px">Aksi</th></tr>${barisHtml}</table><datalist id="lisRuang">${ruang.map(r=>`<option value="${esc(r)}">`).join('')}</datalist>`
+        ${LIS.mp.length ? `<div class="barisAtas">📚 ${mpChips}<button type="button" class="btn kecil" data-lismateri="1">➕ Materi</button></div>
+        ${LIS.mapelAktif && mt.length ? `<div class="barisAtas">🧩 ${mtChips} <span class="kecil">— ketuk untuk mengisi kolom Materi yang terpilih</span></div>` : ''}` : ''}
+        ${LIS.baris.length ? `<div class="geserX"><table class="tabelMini" style="min-width:920px"><tr><th style="width:28px">No</th><th>Hari, Tanggal</th><th style="width:132px">Waktu (WIB)</th><th style="width:52px">Meja</th><th>Materi Ujian</th><th style="min-width:150px">Nama Penguji</th><th>Ruangan</th><th style="width:58px">Aksi</th></tr>${barisHtml}</table></div>`
           : '<p class="kecil" style="margin-top:8px">Belum ada baris — klik ➕ Tambah Baris.</p>'}
+        <datalist id="lisRuang">${ruang.map(r=>`<option value="${esc(r)}">`).join('')}</datalist>
+        <datalist id="lisMateri">${mt.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
         <div class="barisTombol"><button type="button" class="btn utama" data-lissimpan="1">💾 Simpan</button><button type="button" class="btn" data-liscetak="1">🖨️ Cetak</button>${LIS.baris.length?'<button type="button" class="btn bahaya" data-liskosong="1">🗑 Hapus Semua</button>':''}</div>`;
     } else {
-      dalam = `<div class="barisAtas">${chips}</div><div style="margin-top:8px">${lisTabelLihat()}</div><div class="barisTombol"><button type="button" class="btn" data-liscetak="1">🖨️ Cetak</button></div>`;
+      dalam = `<div class="barisAtas">${chips}</div><div class="geserX" style="margin-top:8px">${lisTabelLihat()}</div><div class="barisTombol"><button type="button" class="btn" data-liscetak="1">🖨️ Cetak</button></div>`;
     }
     el('lisKartu').innerHTML = dalam;
   };
@@ -3381,6 +3394,27 @@ async function modLisan(m){
     if(!LIS.baris.length){ toast('⚠️ Belum ada baris untuk dicetak.'); return; }
     cetakJadwal('JADWAL UJIAN LISAN KELAS '+kelas.NamaKelas, lisTabelLihat(), 'Kepala Sekolah', namaKs());
   };
+  const modalMateri = ()=>{
+    if(!LIS.mp.length){ toast('⚠️ Belum ada pelajaran — tambahkan dulu di menu Daftar Pelajaran.'); return; }
+    bukaModal('🧩 Materi Ujian — tersimpan di Daftar Pelajaran', `
+      <label>Pelajaran<select id="mtrMapel">${LIS.mp.map((m,i)=>`<option value="${i}"${m.Nama===LIS.mapelAktif?' selected':''}>${esc(m.Nama)}</option>`).join('')}</select></label>
+      <label>Materi Ujian<input id="mtrNama" placeholder="mis. MUHADATSAH & QAWAID" style="text-transform:uppercase"></label>
+      <p class="kecil">Materi tersimpan permanen di Daftar Pelajaran — tidak ikut terhapus saat reset tahunan. Ketuk pelajarannya di atas, materinya tampil di bawah sesuai pelajaran yang dipilih.</p>`,
+      [{label:'💾 Simpan', cb:async ()=>{
+        const m = LIS.mp[Number(el('mtrMapel').value)];
+        const nama = el('mtrNama').value.trim().toUpperCase();
+        if(!nama){ toast('⚠️ Tulis nama materinya dulu.'); return; }
+        const materi = [...((m.Materi)||[])];
+        if(materi.includes(nama)){ toast('ℹ️ Materi itu sudah ada di pelajaran '+m.Nama+'.'); return; }
+        materi.push(nama);
+        try{
+          await updateDoc(doc(db,'mapel_sekolah',m.id), {Materi:materi});
+          toast('✅ Materi "'+nama+'" tersimpan ke pelajaran '+m.Nama);
+          LIS.mapelAktif = m.Nama;
+          modLisan('lisan');
+        }catch(err){ toast('⛔ '+teksErr(err)); }
+      }}, {label:'Batal'}]);
+  };
   gambar();
   isi.oninput = e=>{
     const inp = e.target.closest('.lisIn'); if(!inp) return;
@@ -3389,6 +3423,10 @@ async function modLisan(m){
     if(f==='Meja') LIS.baris[i].Meja = Number(inp.value)||1;
     else if(f==='PengujiEmail'){ LIS.baris[i].PengujiEmail = inp.value; LIS.baris[i].PengujiNama = namaGuru(inp.value); }
     else LIS.baris[i][f] = inp.value;
+  };
+  isi.onfocusin = e=>{
+    const inp = e.target.closest('.lisIn');
+    if(inp && inp.dataset.f==='Materi') LIS.materiFokus = Number(inp.dataset.i);
   };
   isi.onclick = async e=>{
     const chip = e.target.closest('[data-liskelas]');
@@ -3399,6 +3437,17 @@ async function modLisan(m){
       }
       LIS.kelasId = chip.dataset.liskelas;
       modLisan('lisan');
+      return;
+    }
+    const mp = e.target.closest('[data-lismapel]');
+    if(mp){ LIS.mapelAktif = LIS.mp[Number(mp.dataset.lismapel)].Nama; gambar(); return; }
+    const mb = e.target.closest('[data-lismateri]');
+    if(mb){ modalMateri(); return; }
+    const mk = e.target.closest('[data-lismateripakai]');
+    if(mk){
+      if(LIS.materiFokus==null || !LIS.baris[LIS.materiFokus]){ toast('⚠️ Ketuk dulu kolom "Materi Ujian" pada baris yang mau diisi, baru ketuk materinya.'); return; }
+      LIS.baris[LIS.materiFokus].Materi = mk.dataset.lismateripakai;
+      gambar();
       return;
     }
     const tb = e.target.closest('[data-listambah]');
@@ -3419,6 +3468,82 @@ async function modLisan(m){
       catch(err){ toast('⛔ '+teksErr(err)); }
     }
   };
+}
+
+/* ---------- daftar siswa ---------- */
+let SSW = {data:[], q:'', kelasId:'', kelasList:[]};
+async function modSiswa(isi){
+  const bisaEdit = AKUN.Peran==='operator';
+  SSW.kelasList = await ambilKelas();
+  try{
+    const s = await getDocs(query(collection(db,'siswa'), where('SekolahId','==',AKUN.SekolahId)));
+    SSW.data = s.docs.map(d=>({id:d.id, ...d.data()}));
+  }catch(err){ SSW.data = []; toast('⛔ '+teksErr(err)+' — tambahkan blok Daftar Siswa di rules (lihat catatan).'); }
+  isi.innerHTML = `<h1 class="judul">🧑‍🎓 Daftar Siswa</h1>
+    <div class="kartu">
+      <div class="barisAtas" style="justify-content:space-between">
+        <label style="max-width:230px;margin:0">🔎 Cari nama / NISN<input id="ssCari" placeholder="ketik di sini…" value="${esc(SSW.q)}"></label>
+        <label style="max-width:190px;margin:0">Kelas<select id="ssKelas"><option value="">— semua kelas —</option>${SSW.kelasList.map(k=>`<option value="${k.id}"${k.id===SSW.kelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label>
+        ${bisaEdit?'<button type="button" class="btn utama kecil" id="ssTambah">➕ Tambah Siswa</button>':''}
+        <button type="button" class="btn kecil" id="ssCetak">🖨️ Cetak</button>
+      </div>
+      <div id="ssTabel" style="margin-top:8px"></div>
+    </div>`;
+  const tabel = (d, sertakanAksi)=>{
+    if(!d.length) return `<p class="kecil">Belum ada siswa${SSW.q||SSW.kelasId?' yang cocok — coba kosongkan pencarian/filter':''}. ${bisaEdit?'Klik ➕ Tambah Siswa untuk memasukkan manual.':'Data dimasukkan oleh Operator.'}</p>
+      <p class="kecil">ℹ️ Nantinya hasil Pendaftaran Siswa Baru (PPDB) otomatis masuk ke daftar ini.</p>`;
+    return `<div class="geserX"><table class="tabelMini" style="min-width:860px"><tr><th style="width:30px">No</th><th>NISN</th><th>Nama Lengkap</th><th style="width:70px">JK</th><th>Kelas</th><th>Tempat, Tgl Lahir</th><th>Orang Tua / Wali</th><th>No. HP</th>${sertakanAksi?'<th style="width:58px">Aksi</th>':''}</tr>
+      ${d.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.NISN||'—')}</td><td><b>${esc(x.Nama)}</b></td><td>${esc(x.JK||'—')}</td><td>${esc(x.NamaKelas||'—')}</td><td>${esc(x.TempatLahir||'—')}${x.TglLahir?', '+esc(lisTeks(x.TglLahir)):''}</td><td>${esc(x.WaliNama||'—')}</td><td>${esc(x.WaliHp||'—')}</td>${sertakanAksi?`<td><button type="button" class="btnIkon" data-ssedit="${x.id}" title="Edit">✏️</button> <button type="button" class="btnIkon" data-ssdel="${x.id}" style="color:#F87171" title="Hapus">🗑</button></td>`:''}</tr>`).join('')}</table></div>`;
+  };
+  const tampil = ()=>{
+    const q = norm(SSW.q);
+    const d = SSW.data.filter(x=>(!SSW.kelasId || x.KelasId===SSW.kelasId) && (!q || norm(x.Nama).includes(q) || norm(x.NISN).includes(q)))
+      .sort((a,b)=>(a.Nama||'').localeCompare(b.Nama||''));
+    el('ssTabel').innerHTML = `<div class="kecil" style="margin:2px 0">Total ${SSW.data.length} siswa · tampil ${d.length}</div>` + tabel(d, bisaEdit);
+  };
+  const form = (x, idS)=>{
+    bukaModal(idS?'✏️ Edit Siswa':'➕ Siswa Baru', `
+      <label>NISN<input id="sfNisn" value="${esc(x.NISN||'')}" placeholder="boleh dikosongkan bila belum ada"></label>
+      <label>Nama Lengkap *<input id="sfNama" value="${esc(x.Nama||'')}"></label>
+      <label>Jenis Kelamin<select id="sfJk"><option value="Laki-laki"${x.JK==='Laki-laki'?' selected':''}>Laki-laki</option><option value="Perempuan"${x.JK==='Perempuan'?' selected':''}>Perempuan</option></select></label>
+      <label>Kelas<select id="sfKelas"><option value="">— belum ditaruh —</option>${SSW.kelasList.map(k=>`<option value="${k.id}"${k.id===x.KelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label>
+      <div class="formBaris"><label>Tempat Lahir<input id="sfTempat" value="${esc(x.TempatLahir||'')}"></label><label>Tgl Lahir<input type="date" id="sfTgl" value="${esc(x.TglLahir||'')}"></label></div>
+      <div class="formBaris"><label>Orang Tua / Wali<input id="sfWali" value="${esc(x.WaliNama||'')}"></label><label>No. HP<input id="sfHp" value="${esc(x.WaliHp||'')}"></label></div>`,
+      [{label:'💾 Simpan', cb:async ()=>{
+        const Nama = el('sfNama').value.trim();
+        if(!Nama){ toast('⚠️ Nama siswa wajib diisi.'); return; }
+        const KelasId = el('sfKelas').value;
+        const payload = {NISN:el('sfNisn').value.trim(), Nama, JK:el('sfJk').value, KelasId, NamaKelas:(SSW.kelasList.find(k=>k.id===KelasId)||{}).NamaKelas||'', TempatLahir:el('sfTempat').value.trim(), TglLahir:el('sfTgl').value, WaliNama:el('sfWali').value.trim(), WaliHp:el('sfHp').value.trim()};
+        try{
+          if(idS) await updateDoc(doc(db,'siswa',idS), {...payload, DiperbaruiPada:serverTimestamp()});
+          else await addDoc(collection(db,'siswa'), {...payload, SekolahId:AKUN.SekolahId, Sumber:'Input Manual', DibuatPada:serverTimestamp()});
+          toast(idS?'✅ Data siswa diperbarui':'✅ Siswa ditambahkan');
+          modSiswa(isi);
+        }catch(err){ toast('⛔ '+teksErr(err)); }
+      }}, {label:'Batal'}]);
+  };
+  el('ssCari').oninput = e=>{ SSW.q = e.target.value; tampil(); };
+  el('ssKelas').onchange = e=>{ SSW.kelasId = e.target.value; tampil(); };
+  if(bisaEdit) el('ssTambah').onclick = ()=>form({}, '');
+  el('ssCetak').onclick = ()=>{
+    const q = norm(SSW.q);
+    const d = SSW.data.filter(x=>(!SSW.kelasId || x.KelasId===SSW.kelasId) && (!q || norm(x.Nama).includes(q) || norm(x.NISN).includes(q)))
+      .sort((a,b)=>(a.Nama||'').localeCompare(b.Nama||''));
+    if(!d.length){ toast('⚠️ Belum ada siswa untuk dicetak.'); return; }
+    cetakJadwal('DAFTAR SISWA', tabel(d, false), 'Kepala Sekolah', namaKs());
+  };
+  isi.onclick = async e=>{
+    const ed = e.target.closest('[data-ssedit]');
+    if(ed){ const x = SSW.data.find(y=>y.id===ed.dataset.ssedit); if(x) form(x, x.id); return; }
+    const dl = e.target.closest('[data-ssdel]');
+    if(dl){
+      const x = SSW.data.find(y=>y.id===dl.dataset.ssdel); if(!x) return;
+      const yakin = await konfirmasi('🗑 Hapus siswa "'+x.Nama+'" dari daftar?');
+      if(!yakin) return;
+      try{ await deleteDoc(doc(db,'siswa', x.id)); toast('🗑 Siswa dihapus'); modSiswa(isi); }catch(err){ toast('⛔ '+teksErr(err)); }
+    }
+  };
+  tampil();
 }
 
 /* ---------- alat migrasi master guru ---------- */
@@ -3614,7 +3739,7 @@ async function resetTahunan(){
   }catch(_){ gagalAk = -1; }
   await muatUlangGuru();
   if(gagal.length || gagalAk){
-    toast('⚠️ Reset sebagian — gagal menghapus: '+gagal.join(', ')+(gagalAk?' (sebagian akun guru)':'')+'. Pastikan rules v8.1 dipublikasikan lalu ulangi.');
+    toast('⚠️ Reset sebagian — gagal menghapus: '+gagal.join(', ')+(gagalAk?' (sebagian akun guru)':'')+'. Pastikan rules v8.2 dipublikasikan lalu ulangi.');
   } else {
     toast(`✅ Reset tahunan selesai — ${terhapus} akun guru nonaktif dihapus`);
   }
@@ -3625,7 +3750,7 @@ async function resetPabrik(){
   const yakin2 = await konfirmasi('⚠️ KONFIRMASI TERAKHIR: tindakan ini TIDAK BISA dibatalkan. Tetap hapus semuanya?');
   if(!yakin2) return;
   const gagalList = [];
-  for(const nama of ['jadwal','jadwal_ujian','usulan','notifikasi','pengumuman','mapel_kelas','mapel_sekolah','pengaturan_waktu','kelas','sekolah_kunci','kode_pendaftaran','undangan','pengajuan_ijin','guru_biodata','guru_dok','penghitung_nug','ujian_lisan']){
+  for(const nama of ['jadwal','jadwal_ujian','usulan','notifikasi','pengumuman','mapel_kelas','mapel_sekolah','pengaturan_waktu','kelas','siswa','sekolah_kunci','kode_pendaftaran','undangan','pengajuan_ijin','guru_biodata','guru_dok','penghitung_nug','ujian_lisan']){
     try{
       const r = await hapusKoleksi(nama);
       if(r.gagal>0) gagalList.push(`${nama} (${r.gagal} dokumen)`);
@@ -3649,7 +3774,7 @@ async function resetPabrik(){
 
   if(gagalList.length || gagalAk){
     try{ await signOut(auth); }catch(_){}
-    pesanAuth('⚠️ Reset baru SEBAGIAN — gagal menghapus: '+gagalList.join(', ')+(gagalAk?' akun pengguna':'')+'. Publikasikan rules v8.1 di Firebase Console → Firestore → Rules, lalu masuk kembali dan ulangi reset.');
+    pesanAuth('⚠️ Reset baru SEBAGIAN — gagal menghapus: '+gagalList.join(', ')+(gagalAk?' akun pengguna':'')+'. Publikasikan rules v8.2 di Firebase Console → Firestore → Rules, lalu masuk kembali dan ulangi reset.');
     return;
   }
 
