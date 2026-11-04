@@ -167,6 +167,23 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .tabelMini th,.tabelMini td{border:1px solid var(--garis);padding:5px 8px;text-align:left}
 .tabelMini th{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff}
 .geserX{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+/* ---- obrolan ---- */
+#chatFab{position:fixed;left:16px;bottom:16px;z-index:120;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;font-size:25px;background:linear-gradient(135deg,#1E3A8A,#3B82F6);color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#chatFab:hover{filter:brightness(1.15)}
+#chatPanel{position:fixed;left:12px;bottom:12px;z-index:120;width:min(380px,95vw);height:min(580px,80vh);background:var(--permukaan);border:1px solid var(--garis);border-radius:14px;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden}
+#chatKepala{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(90deg,#064E3B,#1E3A8A);color:#fff;flex-shrink:0}
+#chatKepala .ujTab{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px}
+#chatKepala .ujTab.on{background:linear-gradient(135deg,#F59E0B,#EC4899);font-weight:700}
+#chatIsi{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
+.chatMsg{max-width:86%;border-radius:12px;padding:7px 10px;font-size:13.5px;background:#0F172A;border:1px solid var(--garis);align-self:flex-start;white-space:pre-wrap;word-break:break-word}
+.chatMsg.aku{align-self:flex-end;background:linear-gradient(135deg,#065F46,#0F766E);border-color:transparent}
+.chatMsg.keputusan{background:linear-gradient(135deg,#713F12,#EAB308);color:#1C1917;border-color:transparent}
+.chatFoto{width:100%;max-width:240px;border-radius:8px;display:block;margin:4px 0;cursor:zoom-in}
+#chatBar{display:flex;gap:6px;padding:8px;border-top:1px solid var(--garis);align-items:center;flex-shrink:0;flex-wrap:wrap}
+#chatBar input[type=text]{flex:1;min-width:120px;margin:0}
+.btnTeks{background:none;border:none;color:inherit;cursor:pointer;font-size:11px;text-decoration:underline;padding:0}
+.arItem{width:150px;flex-shrink:0}
+.arItem img{width:100%;border-radius:8px;cursor:zoom-in;display:block;margin-bottom:4px}
 .notifItem{padding:8px;border-bottom:1px solid var(--garis);font-size:14px}
 .notifItem.baru{border-left:4px solid #34D399;background:rgba(16,185,129,.12)}
 .barisTombol{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
@@ -281,6 +298,12 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
       <div id="tickerBar" hidden></div>
     </header>
     <main id="isi"></main>
+    <button id="chatFab" type="button" hidden title="Obrolan Musyawarah">💬<span id="chatBadge" class="badge" hidden></span></button>
+    <div id="chatPanel" hidden>
+      <div id="chatKepala"></div>
+      <div id="chatIsi"></div>
+      <div id="chatBar"></div>
+    </div>
   </div>
 </div>
 
@@ -308,9 +331,9 @@ const db = getFirestore(app);
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
-  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
-  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['statIjin','📊','#059669','Statistik Ijin'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
-  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['lisanSaya','🎤','#F97316','Ujian Lisan'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
+  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
+  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['statIjin','📊','#059669','Statistik Ijin'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
+  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['lisanSaya','🎤','#F97316','Ujian Lisan'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
 
@@ -898,11 +921,21 @@ function tampilApp(){
     const bd = el('badge'); bd.textContent = n>0 ? n : ''; bd.hidden = n===0;
     notifBel(n);
   }, ()=>{});
+  el('chatFab').hidden = false;
+  if(CHAT.lepas) CHAT.lepas();
+  CHAT.lastTs = 0;
+  CHAT.lepas = onSnapshot(query(collection(db,'chat_pesan'), where('SekolahId','==',AKUN.SekolahId)), s=>{
+    CHAT.semua = s.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>((a.DibuatPada?.seconds)||0)-((b.DibuatPada?.seconds)||0));
+    chatMasuk();
+  }, ()=>{});
 }
 function tampilAuth(){
   GERBANG_ANTI++;
   if(lepasNotif){ lepasNotif(); lepasNotif = null; }
   notifBel(0);
+  if(CHAT.lepas){ CHAT.lepas(); CHAT.lepas = null; }
+  CHAT = {buka:false, tab:'staf', lawan:null, semua:[], lepas:null, fotoSiap:'', lastTs:0, dilihat:CHAT.dilihat};
+  el('chatFab').hidden = true; el('chatPanel').hidden = true;
   if(lepasTicker){ lepasTicker(); lepasTicker = null; }
   if(AKUN){
     kosongkanDaftar();
@@ -971,6 +1004,134 @@ onAuthStateChanged(auth, async u=>{
   }
 });
 
+/* ---------- obrolan (chat musyawarah) ---------- */
+let CHAT = {buka:false, tab:'staf', lawan:null, semua:[], lepas:null, fotoSiap:'', lastTs:0, dilihat:{}};
+function chatMuatDilihat(){ try{ CHAT.dilihat = JSON.parse(localStorage.getItem('chatDilihat')||'{}'); }catch(_){ CHAT.dilihat = {}; } }
+function chatSimpanDilihat(){ try{ localStorage.setItem('chatDilihat', JSON.stringify(CHAT.dilihat)); }catch(_){} }
+function chatRuang(){
+  if(CHAT.tab==='pribadi' && CHAT.lawan) return 'P:'+[norm(AKUN.Email), norm(CHAT.lawan.EmailPengguna)].sort().join('__');
+  return 'STAF';
+}
+function chatRuangSaya(m){ return m.Ruang==='STAF' || (m.Ruang.indexOf('P:')===0 && m.Ruang.indexOf(norm(AKUN.Email))>-1); }
+function chatBelum(){
+  return CHAT.semua.filter(m=>m.PengirimEmail!==AKUN.Email && chatRuangSaya(m) && ((m.DibuatPada?.seconds||0)*1000 > (CHAT.dilihat[m.Ruang]||0))).length;
+}
+function chatBadge(){
+  const bd = el('chatBadge'); if(!bd) return;
+  const n = chatBelum();
+  bd.textContent = n>0 ? (n>99?'99+':n) : ''; bd.hidden = n===0;
+}
+function chatBuka(){
+  CHAT.buka = true; el('chatFab').hidden = true; el('chatPanel').hidden = false;
+  chatGambar();
+}
+function chatMini(){
+  CHAT.buka = false; el('chatPanel').hidden = true; el('chatFab').hidden = false;
+  chatBadge();
+}
+function chatGambar(){
+  chatMuatDilihat();
+  const txLama = el('chatTeks'); const vLama = txLama ? txLama.value : ''; const fokusLama = txLama && document.activeElement===txLama;
+  const ruang = chatRuang();
+  CHAT.dilihat[ruang] = Date.now(); chatSimpanDilihat();
+  const bisaPin = AKUN.Peran==='kepala_sekolah';
+  el('chatKepala').innerHTML = `${ruang==='STAF'
+      ? `<div><b>👥 Grup Staf</b><div class="kecil" style="color:rgba(255,255,255,.85)">Musyawarah seluruh staf sekolah</div></div>`
+      : `<div><button type="button" class="btnIkon" id="chatKembali" title="Kembali">⬅</button> <b>${esc((CHAT.lawan||{}).NamaPengguna||'')}</b><div class="kecil" style="color:rgba(255,255,255,.85)">Obrolan pribadi</div></div>`}
+    <div class="barisAtas" style="margin:0"><button type="button" class="ujTab${CHAT.tab==='staf'?' on':''}" data-chattab="staf">👥 Staf</button><button type="button" class="ujTab${CHAT.tab==='pribadi'?' on':''}" data-chattab="pribadi">✉️ Pribadi</button><button type="button" class="btnIkon" id="chatTutup" title="Perkecil">➖</button></div>`;
+  let dalam = '';
+  if(CHAT.tab==='pribadi' && !CHAT.lawan){
+    const staf = GURU.filter(g=>(g.StatusAkun||'aktif')==='aktif' && g.EmailPengguna!==AKUN.Email).sort((a,b)=>(a.NamaPengguna||'').localeCompare(b.NamaPengguna||''));
+    dalam = `<p class="kecil" style="margin:4px 2px">Pilih staf untuk obrolan pribadi:</p>` + (staf.map(g=>`<button type="button" class="chipHari" data-chatlawan="${esc(g.EmailPengguna)}">${esc(g.NamaPengguna)} (${labelPeran(g.Peran)})</button>`).join('') || '<p class="kecil">Belum ada staf lain.</p>');
+  } else {
+    const msgs = CHAT.semua.filter(m=>m.Ruang===ruang);
+    dalam = msgs.map(m=>{
+      const aku = m.PengirimEmail===AKUN.Email;
+      const pin = m.Tipe==='keputusan';
+      const t = m.DibuatPada?.seconds ? new Date(m.DibuatPada.seconds*1000).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="chatMsg${aku?' aku':''}${pin?' keputusan':''}" data-chatid="${esc(m.id)}">
+        ${pin?'📌 <b>KEPUTUSAN</b><br>':''}
+        ${!aku?`<b>${esc(m.PengirimNama||'')}</b> <span class="kecil">${labelPeran(m.Peran)}</span><br>`:''}
+        ${m.Foto?`<img src="${esc(m.Foto)}" class="chatFoto" data-chatfoto="${esc(m.id)}" alt="bukti">`:''}
+        ${m.Isi?esc(m.Isi):''}
+        <div class="kecil" style="margin-top:2px;opacity:.75">${t}${bisaPin?` · <button type="button" class="btnTeks" data-chatpin="${esc(m.id)}">${pin?'batal keputusan':'📌 jadikan keputusan'}</button>`:''}</div>
+      </div>`;
+    }).join('') || '<p class="kecil" style="margin:4px 2px">Belum ada pesan. Mulailah musyawarah — pesan muncul langsung tanpa muat ulang.</p>';
+  }
+  el('chatIsi').innerHTML = dalam;
+  el('chatBar').innerHTML = (CHAT.tab==='pribadi' && !CHAT.lawan) ? '' :
+    `${CHAT.fotoSiap?`<span id="chatFotoPrev" class="chipHari on" style="cursor:pointer">📎 foto siap ✕</span>`:''}
+     <input type="file" id="chatFile" accept="image/*" hidden>
+     <button type="button" class="btnIkon" id="chatFoto" title="Kirim foto bukti">📷</button>
+     <input type="text" id="chatTeks" placeholder="Tulis pesan…" maxlength="500" autocomplete="off">
+     <button type="button" class="btn utama kecil" id="chatKirim">➤</button>`;
+  const txBaru = el('chatTeks');
+  if(txBaru){ txBaru.value = vLama; if(fokusLama) txBaru.focus(); }
+  const isiEl = el('chatIsi'); isiEl.scrollTop = isiEl.scrollHeight;
+  el('chatTutup').onclick = ()=>chatMini();
+  const kb = el('chatKembali'); if(kb) kb.onclick = ()=>{ CHAT.lawan=null; chatGambar(); };
+  el('chatKepala').querySelectorAll('[data-chattab]').forEach(b=>b.onclick=()=>{ CHAT.tab = b.dataset.chattab; if(CHAT.tab==='staf') CHAT.lawan=null; chatGambar(); });
+  el('chatIsi').querySelectorAll('[data-chatlawan]').forEach(b=>b.onclick=()=>{
+    const g = GURU.find(x=>x.EmailPengguna===b.dataset.chatlawan);
+    if(g){ CHAT.lawan = g; chatGambar(); }
+  });
+  const fp = el('chatFotoPrev'); if(fp) fp.onclick = ()=>{ CHAT.fotoSiap=''; chatGambar(); };
+  const cf = el('chatFoto'); if(cf) cf.onclick = ()=>el('chatFile').click();
+  const fl = el('chatFile'); if(fl) fl.onchange = async e=>{
+    const f = e.target.files[0]; if(!f) return;
+    toast('⏳ Memproses foto…');
+    try{ CHAT.fotoSiap = await gbKompresFoto(f, 720, .7); chatGambar(); }
+    catch(err){ toast('⛔ '+teksErr(err)); }
+    e.target.value='';
+  };
+  const kr = el('chatKirim'); if(kr) kr.onclick = ()=>chatKirim();
+  if(txBaru) txBaru.onkeydown = e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); chatKirim(); } };
+  el('chatIsi').querySelectorAll('[data-chatfoto]').forEach(g=>g.onclick=()=>{
+    const m = CHAT.semua.find(x=>x.id===g.dataset.chatfoto);
+    if(m && m.Foto) bukaModal('📷 Bukti Foto', `<img src="${esc(m.Foto)}" style="width:100%;border-radius:10px">`, [{label:'Tutup'}]);
+  });
+  el('chatIsi').querySelectorAll('[data-chatpin]').forEach(b=>b.onclick=()=>chatPin(b.dataset.chatpin));
+  chatBadge();
+}
+async function chatKirim(){
+  const tx = el('chatTeks'); const isi = tx ? tx.value.trim() : '';
+  const foto = CHAT.fotoSiap;
+  if(!isi && !foto) return;
+  const ruang = chatRuang();
+  try{
+    await addDoc(collection(db,'chat_pesan'), {SekolahId:AKUN.SekolahId, Ruang:ruang, PengirimEmail:AKUN.Email, PengirimNama:AKUN.NamaPengguna||'', Peran:AKUN.Peran, Isi:isi, Foto:foto||'', Tipe:'pesan', DibuatPada:serverTimestamp()});
+    if(foto){
+      await addDoc(collection(db,'arsip_bukti'), {SekolahId:AKUN.SekolahId, Ruang: ruang==='STAF'?'Grup Staf':'Pribadi', Keterangan:isi||'(foto bukti)', Foto:foto, PengirimEmail:AKUN.Email, PengirimNama:AKUN.NamaPengguna||'', DibuatPada:serverTimestamp()});
+    }
+    CHAT.fotoSiap = '';
+    chatGambar();
+  }catch(err){ toast('⛔ '+teksErr(err)); }
+}
+async function chatPin(id){
+  const m = CHAT.semua.find(x=>x.id===id); if(!m) return;
+  const jadi = m.Tipe!=='keputusan';
+  try{
+    await updateDoc(doc(db,'chat_pesan',id), {Tipe: jadi?'keputusan':'pesan'});
+    if(jadi){
+      const staf = GURU.filter(g=>(g.StatusAkun||'aktif')==='aktif' && g.EmailPengguna!==AKUN.Email);
+      for(const g of staf){
+        await addDoc(collection(db,'notifikasi'), {SekolahId:AKUN.SekolahId, TargetEmail:g.EmailPengguna, Judul:'📌 KEPUTUSAN Kepala Sekolah', Isi:'Pesan ditandai sebagai keputusan: "'+((m.Isi||'foto bukti')||'').slice(0,110)+'" — buka 💬 Obrolan untuk selengkapnya.', Dibuka:false, DibuatPada:serverTimestamp()});
+      }
+      toast('📌 Ditandai sebagai KEPUTUSAN'+(staf.length?' — notifikasi terkirim ke '+staf.length+' staf':''));
+    } else { toast('Penanda keputusan dibatalkan'); }
+  }catch(err){ toast('⛔ '+teksErr(err)); }
+}
+function chatMasuk(){
+  let terbesar = 0;
+  CHAT.semua.forEach(m=>{ const t = (m.DibuatPada?.seconds)||0; if(t>terbesar) terbesar = t; });
+  const dariOrang = terbesar>0 && CHAT.semua.some(m=>((m.DibuatPada?.seconds)||0)===terbesar && m.PengirimEmail!==AKUN.Email);
+  if(terbesar>CHAT.lastTs){
+    if(dariOrang && !CHAT.buka) notifBunyi();
+    CHAT.lastTs = terbesar;
+  }
+  if(CHAT.buka) chatGambar(); else chatBadge();
+}
+
 /* ---------- router modul ---------- */
 async function bukaModul(n){
   document.querySelectorAll('#menu .menuBtn').forEach(b=>b.classList.toggle('aktif', b.dataset.modul===n));
@@ -983,7 +1144,7 @@ async function bukaModul(n){
 const MODUL = {
   beranda: modBeranda, susun: modSusun, ujian: modUjian, kelas: modKelas, guru: modGuru, laporan: modLaporan,
   pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
-  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, statIjin: modStatIjin, pelajaran: modPelajaran, siswa: modSiswa,
+  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, statIjin: modStatIjin, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
   lisan: async ()=>{ await modLisan('lisan'); },
   lisanSaya: async ()=>{ await modLisan('lisanSaya'); },
   alatMigrasi: modMigrasi
@@ -3546,6 +3707,45 @@ async function modSiswa(isi){
   tampil();
 }
 
+/* ---------- arsip bukti ---------- */
+let ARS = {data:[], q:''};
+async function modArsip(isi){
+  const bisaEdit = AKUN.Peran==='operator';
+  try{
+    const s = await getDocs(query(collection(db,'arsip_bukti'), where('SekolahId','==',AKUN.SekolahId)));
+    ARS.data = s.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>((b.DibuatPada?.seconds)||0)-((a.DibuatPada?.seconds)||0));
+  }catch(err){ ARS.data = []; toast('⛔ '+teksErr(err)); }
+  isi.innerHTML = `<h1 class="judul">🗂️ Arsip Bukti Sekolah</h1>
+    <div class="kartu">
+      <p class="kecil">Foto bukti yang dikirim lewat 💬 Obrolan tersimpan permanen di sini — <b>tidak ikut terhapus</b> saat reset tahunan maupun reset pabrik. Ketuk foto untuk melihat besar.</p>
+      <label style="max-width:280px">🔎 Cari keterangan / pengirim<input id="arCari" placeholder="ketik di sini…" value="${esc(ARS.q)}"></label>
+      <div id="arGrid" style="margin-top:10px"></div>
+    </div>`;
+  const tampil = ()=>{
+    const q = norm(ARS.q);
+    const d = ARS.data.filter(x=>!q || norm(x.Keterangan).includes(q) || norm(x.PengirimNama).includes(q) || norm(x.Ruang).includes(q));
+    el('arGrid').innerHTML = d.length ? `<div class="barisAtas" style="align-items:flex-start">${d.map(x=>`<div class="arItem"><img src="${esc(x.Foto)}" data-arfoto="${esc(x.id)}" alt="bukti"><div style="font-size:12px"><b>${esc(x.Keterangan||'')}</b><br><span class="kecil">${esc(x.PengirimNama||'')} · ${x.DibuatPada?.seconds?new Date(x.DibuatPada.seconds*1000).toLocaleString('id-ID'):''}${x.Ruang?' · '+esc(x.Ruang):''}</span>${bisaEdit?`<br><button type="button" class="btnTeks" data-ardel="${esc(x.id)}" style="color:#F87171">hapus</button>`:''}</div></div>`).join('')}</div>`
+      : '<p class="kecil">Belum ada arsip. Foto bukti yang dikirim lewat 💬 Obrolan akan muncul di sini secara otomatis.</p>';
+  };
+  el('arCari').oninput = e=>{ ARS.q = e.target.value; tampil(); };
+  isi.onclick = async e=>{
+    const f = e.target.closest('[data-arfoto]');
+    if(f){
+      const x = ARS.data.find(y=>y.id===f.dataset.arfoto);
+      if(x) bukaModal('📷 Bukti — '+esc(x.PengirimNama||''), `<img src="${esc(x.Foto)}" style="width:100%;border-radius:10px"><p class="kecil">${esc(x.Keterangan||'')}</p>`, [{label:'Tutup'}]);
+      return;
+    }
+    const dl = e.target.closest('[data-ardel]');
+    if(dl){
+      const x = ARS.data.find(y=>y.id===dl.dataset.ardel); if(!x) return;
+      const yakin = await konfirmasi('🗑 Hapus arsip bukti ini? Tindakan ini permanen.');
+      if(!yakin) return;
+      try{ await deleteDoc(doc(db,'arsip_bukti', x.id)); toast('🗑 Arsip dihapus'); modArsip(isi); }catch(err){ toast('⛔ '+teksErr(err)); }
+    }
+  };
+  tampil();
+}
+
 /* ---------- alat migrasi master guru ---------- */
 let MIG = {data:[], baru:[], dilewati:[], tanpaNug:0, kolomAneh:[]};
 
@@ -3721,7 +3921,7 @@ async function resetTahunan(){
   const lanjut = await konfirmasi('🔄 RESET TAHUNAN: menghapus SEMUA jadwal, usulan, notifikasi, dan akun guru nonaktif/mutasi. Guru aktif, kelas, mapel & pengaturan waktu TETAP utuh. Lanjutkan?');
   if(!lanjut) return;
   const gagal = [];
-  for(const nama of ['jadwal','usulan','notifikasi','undangan','jadwal_ujian','pengajuan_ijin']){
+  for(const nama of ['jadwal','usulan','notifikasi','undangan','jadwal_ujian','pengajuan_ijin','chat_pesan']){
     try{
       const r = await hapusKoleksi(nama);
       if(r.gagal>0) gagal.push(nama);
@@ -3750,7 +3950,7 @@ async function resetPabrik(){
   const yakin2 = await konfirmasi('⚠️ KONFIRMASI TERAKHIR: tindakan ini TIDAK BISA dibatalkan. Tetap hapus semuanya?');
   if(!yakin2) return;
   const gagalList = [];
-  for(const nama of ['jadwal','jadwal_ujian','usulan','notifikasi','pengumuman','mapel_kelas','mapel_sekolah','pengaturan_waktu','kelas','siswa','sekolah_kunci','kode_pendaftaran','undangan','pengajuan_ijin','guru_biodata','guru_dok','penghitung_nug','ujian_lisan']){
+  for(const nama of ['jadwal','jadwal_ujian','usulan','notifikasi','pengumuman','mapel_kelas','mapel_sekolah','pengaturan_waktu','kelas','siswa','sekolah_kunci','kode_pendaftaran','undangan','pengajuan_ijin','guru_biodata','guru_dok','penghitung_nug','ujian_lisan','chat_pesan']){
     try{
       const r = await hapusKoleksi(nama);
       if(r.gagal>0) gagalList.push(`${nama} (${r.gagal} dokumen)`);
@@ -3817,6 +4017,7 @@ async function muatBranding(){
 function aman(fn){ try{ fn(); }catch(err){ console.error('Kendala init:', err); } }
 aman(()=>{ el('fMasuk').onsubmit = prosesMasuk; });
 aman(()=>{ el('btnLonceng').onclick = ()=>{ if(AKUN) lihatNotifikasi(); }; });
+aman(()=>{ el('chatFab').onclick = chatBuka; });
 aman(()=>{ el('tabMasuk').onclick = ()=> gantiTab('masuk'); });
 aman(()=>{ el('tabDaftar').onclick = ()=> gantiTab('daftar'); });
 aman(()=>{ el('btnWali').onclick = bukaWali; });
