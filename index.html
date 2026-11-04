@@ -84,8 +84,6 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .sLogo.default{display:inline-flex;align-items:center;justify-content:center;font-size:34px}
 .fotoWrap{position:relative;width:64px;height:64px;margin:0 auto;cursor:pointer}
 .fotoWrap .sLogo{display:block}
-.btnKamera{position:absolute;right:-5px;bottom:-5px;width:27px;height:27px;border-radius:50%;border:2px solid #064E3B;background:linear-gradient(135deg,#F59E0B,#F97316);color:#fff;font-size:13px;cursor:pointer;padding:0;line-height:1}
-.btnKamera:hover{filter:brightness(1.15)}
 .sNama{font-family:'Baloo 2';font-size:15px;margin-top:4px;color:#fff}
 #sIdent .kecil{color:rgba(255,255,255,.9)}
 #menu{display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;min-height:0;padding-right:2px}
@@ -897,11 +895,13 @@ function tampilApp(){
   lepasNotif = onSnapshot(query(collection(db,'notifikasi'), where('TargetEmail','==',AKUN.Email)), s=>{
     const n = s.docs.filter(d=>!d.data().Dibuka).length;
     const bd = el('badge'); bd.textContent = n>0 ? n : ''; bd.hidden = n===0;
+    notifBel(n);
   }, ()=>{});
 }
 function tampilAuth(){
   GERBANG_ANTI++;
   if(lepasNotif){ lepasNotif(); lepasNotif = null; }
+  notifBel(0);
   if(lepasTicker){ lepasTicker(); lepasTicker = null; }
   if(AKUN){
     kosongkanDaftar();
@@ -915,6 +915,31 @@ function tampilAuth(){
   el('layarAuth').hidden = false;
   muatBranding();
   siapkanDaftar();
+}
+let notifAudio = null, notifBelTimer = null;
+function notifBunyi(){
+  try{
+    notifAudio = notifAudio || new (window.AudioContext||window.webkitAudioContext)();
+    if(notifAudio.state==='suspended') notifAudio.resume();
+    const t0 = notifAudio.currentTime;
+    [784, 1046.5, 1318.5].forEach((f,i)=>{
+      const o = notifAudio.createOscillator(), g = notifAudio.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001, t0+i*0.16);
+      g.gain.exponentialRampToValueAtTime(0.22, t0+i*0.16+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+i*0.16+0.8);
+      o.connect(g); g.connect(notifAudio.destination);
+      o.start(t0+i*0.16); o.stop(t0+i*0.16+0.85);
+    });
+  }catch(_){}
+}
+function notifBel(belumDibaca){
+  if(belumDibaca>0){
+    if(notifBelTimer) return;
+    const dering = ()=>{ const bg = el('modalBg'); if(bg && !bg.hidden) return; notifBunyi(); };
+    dering();
+    notifBelTimer = setInterval(dering, 10000);
+  } else if(notifBelTimer){ clearInterval(notifBelTimer); notifBelTimer = null; }
 }
 async function lihatNotifikasi(){
   try{
@@ -2324,15 +2349,14 @@ async function gerbangBio(u){
   }
 }
 
-async function simpanFotoProfil(dataUrl, kosong){
+async function simpanFotoProfil(dataUrl){
   const emailKu = (AKUN.Email||'').toLowerCase();
   const bb = await getDocs(query(collection(db,'guru_biodata'), where('Email','==',emailKu), where('SekolahId','==',AKUN.SekolahId)));
   const d0 = bb.docs[0];
-  const val = kosong ? '' : dataUrl;
   if(d0){
-    await updateDoc(doc(db,'guru_biodata',d0.id), {FotoProfil:val, DiperbaruiPada:serverTimestamp()});
-  } else if(!kosong){
-    await setDoc(doc(db,'guru_biodata',emailKu), {SekolahId:AKUN.SekolahId, Email:emailKu, Nama:AKUN.NamaPengguna||'', Jabatan:labelPeran(AKUN.Peran).toUpperCase(), FotoProfil:val, Sumber:'Profil Sendiri', DibuatPada:serverTimestamp(), DiperbaruiPada:serverTimestamp()});
+    await updateDoc(doc(db,'guru_biodata',d0.id), {FotoProfil:dataUrl, DiperbaruiPada:serverTimestamp()});
+  } else {
+    await setDoc(doc(db,'guru_biodata',emailKu), {SekolahId:AKUN.SekolahId, Email:emailKu, Nama:AKUN.NamaPengguna||'', Jabatan:labelPeran(AKUN.Peran).toUpperCase(), FotoProfil:dataUrl, Sumber:'Profil Sendiri', DibuatPada:serverTimestamp(), DiperbaruiPada:serverTimestamp()});
   }
 }
 
@@ -2353,25 +2377,12 @@ async function sisiProfil(){
     box.innerHTML = `
       <div class="fotoWrap" id="sFotoWrap">
         ${foto ? `<img src="${esc(foto)}" class="sLogo">` : '<div class="sLogo default">👤</div>'}
-        <button type="button" class="btnKamera" id="sKamera" title="Ganti foto dari galeri HP">📷</button>
       </div>
-      <input type="file" id="sFileFoto" accept="image/*" hidden>
       <div class="sNama">${esc(AKUN.NamaPengguna||'')}</div>
       <div class="kecil">${labelPeran(AKUN.Peran)}</div>
       <div style="margin-top:8px;text-align:right"><button type="button" class="btn kecil" id="sEditProfil">✏️ Edit Profil</button></div>`;
     box.onclick = ()=>modProfilGuru();
-    el('sKamera').onclick = e=>{ e.stopPropagation(); el('sFileFoto').click(); };
     el('sEditProfil').onclick = e=>{ e.stopPropagation(); modProfilGuru(); };
-    el('sFileFoto').onchange = async e2=>{
-      const file = e2.target.files[0]; if(!file) return;
-      toast('⏳ Memproses foto…');
-      try{
-        const kecil = await gbKompresFoto(file, 256, .72);
-        await simpanFotoProfil(kecil, false);
-        toast('✅ Foto profil diperbarui'); await sisiProfil();
-      }catch(err){ toast('⛔ '+teksErr(err)); }
-      e2.target.value='';
-    };
   }catch(_){}
 }
 
@@ -2418,10 +2429,9 @@ async function modProfilGuru(){
         ${fotoP?`<img src="${esc(fotoP)}" class="sLogo" style="width:72px;height:72px">`:'<div class="sLogo default" style="width:72px;height:72px">👤</div>'}
         <div style="flex:1">
           <h3 style="margin:0 0 6px">📷 Foto Profil (menu samping)</h3>
-          <p class="kecil">Foto ini hanya tampil di menu samping — <b>tidak mengubah</b> dokumen resmi biodata.</p>
+          <p class="kecil">Foto ini hanya tampil di menu samping — tidak wajib. Tidak ingin memasang foto? Biarkan saja kosong.</p>
           <input type="file" id="pFileFoto" accept="image/*" hidden>
           <button type="button" class="btn kecil" id="pGantiFoto">📷 Ganti Foto Profil</button>
-          ${(x && x.FotoProfil)?'<button type="button" class="btn kecil bahaya" id="pHapusFoto">🗑 Kembalikan ke Foto Resmi</button>':''}
         </div>
       </div>
     </div>
@@ -2445,7 +2455,7 @@ async function modProfilGuru(){
     toast('⏳ Memproses foto…');
     try{
       const kecil = await gbKompresFoto(file, 256, .72);
-      await simpanFotoProfil(kecil, false);
+      await simpanFotoProfil(kecil);
       toast('✅ Foto profil diperbarui'); await sisiProfil(); modProfilGuru();
     }catch(err){ toast('⛔ '+teksErr(err)); }
     e2.target.value='';
@@ -2459,9 +2469,6 @@ async function modProfilGuru(){
       return;
     }
     if(e.target.closest('#pCetakBio')){ cetakJadwal('BIODATA GURU — '+((x&&x.Nama)||''), tampil, 'Kepala Sekolah', namaKs()); return; }
-    if(e.target.closest('#pHapusFoto')){
-      try{ await simpanFotoProfil('', true); toast('✅ Dikembalikan ke foto resmi'); await sisiProfil(); modProfilGuru(); }catch(err){ toast('⛔ '+teksErr(err)); }
-    }
   };
 }
 
