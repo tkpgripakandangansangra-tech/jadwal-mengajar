@@ -252,6 +252,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #menu .menuBtn[data-modul="lisan"]{background:linear-gradient(135deg,#9A3412,#F97316)}
 .lisIn{padding:5px 6px;font-size:13px;border-radius:8px}
 .ujTabBar{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+#ujJudul{margin:18px 18px 14px}
+#ujTabBar{padding:0 18px}
 .ujTab{padding:10px 22px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:rgba(148,163,184,.12);font-weight:700;font-size:14px;cursor:pointer;color:inherit}
 .ujTab.on{background:linear-gradient(135deg,#BE185D,#DB2777);border-color:transparent;color:#fff}
 .ujTab.oranye.on{background:linear-gradient(135deg,#9A3412,#F97316)}
@@ -3692,7 +3694,7 @@ async function modLisan(m){
       dalam = `<div class="barisAtas">${chips}<button type="button" class="btn utama kecil" data-listambah="1">➕ Tambah Baris</button></div>
         ${LIS.mp.length ? `<div class="barisAtas">📚 ${mpChips}<button type="button" class="btn kecil" data-lismateri="1">➕ Materi</button></div>
         ${LIS.mapelAktif && mt.length ? `<div class="barisAtas">🧩 ${mtChips} <span class="kecil">— ketuk untuk mengisi kolom Materi yang terpilih</span></div>` : ''}` : ''}
-        ${LIS.baris.length ? `<div class="geserX"><table class="tabelMini" style="min-width:920px"><tr><th style="width:28px">No</th><th>Hari, Tanggal</th><th style="width:132px">Waktu (WIB)</th><th style="width:52px">Meja</th><th>Materi Ujian</th><th style="min-width:150px">Nama Penguji</th><th>Ruangan</th><th style="width:58px">Aksi</th></tr>${barisHtml}</table></div>`
+        ${LIS.baris.length ? `<div class="geserX"><table class="tabelMini" style="min-width:1160px"><tr><th style="width:36px">No</th><th style="min-width:150px">Hari, Tanggal</th><th style="width:172px">Waktu (WIB)</th><th style="width:82px">Meja</th><th style="min-width:210px">Materi Ujian</th><th style="min-width:190px">Nama Penguji</th><th style="min-width:150px">Ruangan</th><th style="width:58px">Aksi</th></tr>${barisHtml}</table></div>`
           : '<p class="kecil" style="margin-top:8px">Belum ada baris — klik ➕ Tambah Baris.</p>'}
         <datalist id="lisRuang">${ruang.map(r=>`<option value="${esc(r)}">`).join('')}</datalist>
         <datalist id="lisMateri">${mt.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
