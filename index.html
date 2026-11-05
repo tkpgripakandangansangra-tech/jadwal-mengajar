@@ -2391,7 +2391,6 @@ async function modGuru(isi){
     <table class="tabelMini">
       ${barisT('Jabatan',esc(x.Jabatan))}${barisT('NRG',esc(x.NRG))}${barisT('NUPTK',esc(x.NUPTK))}
       ${barisT('TMT',esc(x.TMT))}${barisT('No. SK Pengangkatan',esc(x.NoSkPengangkatan))}
-      ${barisT('Status',esc(x.Status))}${barisT('Keterangan',esc(x.Keterangan))}
     </table>
     <h3>Keluarga</h3>
     <table class="tabelMini">
@@ -2473,7 +2472,7 @@ let GB = {mode:'tambah', docId:'', data:null};
 let GBR = {user:null, div:null};
 let PROFIL = {docId:'', data:null};
 let GBDOK = {}, GBLAMA = {};
-const TIPE_DOK = [['kk','Foto Kartu Keluarga'],['ktp','Foto KTP'],['foto','Pas Foto'],['ijazah','Foto Ijazah'],['transkrip','Foto Transkrip Nilai'],['sk','Foto SK Pengangkatan']];
+const TIPE_DOK = [['foto','Pas Foto'],['ktp','Foto KTP'],['kk','Foto Kartu Keluarga'],['ijazah','Foto Ijazah'],['transkrip','Foto Transkrip Nilai'],['sk','Foto SK Pengangkatan']];
 
 function gbUrlFoto(url){
   const s = String(url||'').trim();
@@ -2765,7 +2764,7 @@ async function guruBioForm(data, docId, mode, wadah){
       qd.docs.forEach(d=>{ const y = d.data(); if(y.Tipe) GBLAMA[y.Tipe] = y.Data||''; });
     }catch(_){}
   }
-  const f = (id,label,wajib,tipe,ph,angka)=>`<div style="margin-bottom:8px"><label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">${label} ${wajib?'<span style="color:#F87171">*</span>':''}</label><input id="${id}" type="${tipe||'text'}" ${angka?'data-angka="1"':''} class="lisIn" style="width:100%;box-sizing:border-box;${tipe==='date'?'':'text-transform:uppercase'}" placeholder="${ph||''}"></div>`;
+  const f = (id,label,wajib,tipe,ph,angka,maks)=>`<div style="margin-bottom:8px"><label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">${label} ${wajib?'<span style="color:#F87171">*</span>':''}</label><input id="${id}" type="${tipe||'text'}" ${angka?'data-angka="1"':''} ${maks?`maxlength="${maks}" inputmode="numeric"`:''} class="lisIn" style="width:100%;box-sizing:border-box;${tipe==='date'?'':'text-transform:uppercase'}" placeholder="${ph||''}"></div>`;
   const kartuDok = (tipe,label)=>`<div class="barisAtas" style="align-items:center;border:1px dashed var(--garis);border-radius:12px;padding:8px;margin-bottom:8px">
     <span style="flex:1"><b class="kecil">${label}</b> <span id="gbReq-${tipe}" style="color:#F87171">*</span><br><span class="kecil" id="gbInfo-${tipe}">${GBLAMA[tipe]?'✔ sudah ada berkas':'belum ada'}</span></span>
     <img id="gbPrev-${tipe}" src="${GBDOK[tipe]||GBLAMA[tipe]||''}" style="width:84px;height:60px;object-fit:cover;border-radius:8px;${(GBDOK[tipe]||GBLAMA[tipe])?'':'display:none'}">
@@ -2799,12 +2798,12 @@ async function guruBioForm(data, docId, mode, wadah){
       ${f('gbTempatLahir','Tempat Lahir',true)}
       ${f('gbTglLahir','Tanggal Lahir',true,'date')}
       <div style="margin-bottom:8px"><label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Jabatan <span style="color:#F87171">*</span></label><select id="gbJabatan" class="lisIn" style="width:100%">${jabOpsi}</select></div>
-      ${f('gbNik','NIK (16 Digit)',true,'text','',true)}
-      ${f('gbNoKK','No Kartu Keluarga',true,'text','',true)}
+      ${f('gbNik','NIK (tepat 16 digit)',true,'text','',true,16)}
+      ${f('gbNoKK','No Kartu Keluarga (tepat 16 digit)',true,'text','',true,16)}
       ${f('gbNrg','NRG (isi - bila belum ada)',true,'text','',true)}
       ${f('gbNuptk','NUPTK (isi - bila belum ada)',true,'text','',true)}
-      ${f('gbTmt','TMT — Tanggal Mulai Tugas (date, isi - bila belum ada)',true)}
-      ${f('gbNoSk','No. SK Pengangkatan (isi - bila belum ada)',true,'text','',true)}
+      ${f('gbTmt','TMT — Tanggal Mulai Tugas (kosongkan bila belum ada)',false,'date')}
+      ${f('gbNoSk','No. SK Pengangkatan (isi - bila belum ada)',true)}
       <h3 style="color:#34D399">2 · Alamat &amp; Kontak</h3>
       ${f('gbAlamat','Alamat (Jalan/Gang)',true)}
       ${f('gbDusun','Dusun',true)}
@@ -2814,7 +2813,7 @@ async function guruBioForm(data, docId, mode, wadah){
       ${f('gbKecamatan','Kecamatan',true)}
       ${f('gbKabupaten','Kabupaten / Kota',true)}
       ${f('gbProvinsi','Provinsi',true)}
-      ${f('gbKodePos','Kode Pos',true,'text','',true)}
+      ${f('gbKodePos','Kode Pos (5 digit)',true,'text','',true,5)}
       ${f('gbWa','No. WhatsApp Aktif',true,'text','',true)}
       ${kirim==='daftar' ? '' : f('gbEmail','E-mail Aktif'+(kirim!=='op'?' (terkunci ke akun Anda)':''),true)}
       <h3 style="color:#C084FC">3 · Keluarga</h3>
@@ -2853,7 +2852,7 @@ async function guruBioForm(data, docId, mode, wadah){
     } else { v('gbEmail','-'); }
   }
   if(kirim==='gerbang'||kirim==='sendiri') el('gbEmail').readOnly = true;
-  const wajibIds = ['gbNama','gbGelar','gbJabatan','gbNik','gbNoKK','gbNrg','gbNuptk','gbTmt','gbNoSk','gbAlamat','gbDusun','gbRt','gbRw','gbDesa','gbKecamatan','gbKabupaten','gbProvinsi','gbKodePos','gbWa','gbEmail','gbSuamiNama','gbSuamiNik','gbSuamiTgl','gbSuamiKerja','gbIbuNama','gbIbuNik','gbIbuTgl','gbIbuKerja'];
+  const wajibIds = ['gbNama','gbGelar','gbJabatan','gbNik','gbNoKK','gbNrg','gbNuptk','gbNoSk','gbAlamat','gbDusun','gbRt','gbRw','gbDesa','gbKecamatan','gbKabupaten','gbProvinsi','gbKodePos','gbWa','gbEmail','gbSuamiNama','gbSuamiNik','gbSuamiTgl','gbSuamiKerja','gbIbuNama','gbIbuNik','gbIbuTgl','gbIbuKerja'];
   if(kirim==='daftar') wajibIds.push('gbSandi');
   const gbPeriksa = ()=>{
     const btn = el('gbSimpan'); if(!btn) return;
@@ -2906,6 +2905,9 @@ async function guruBioForm(data, docId, mode, wadah){
     const atas = s => s ? s.toUpperCase() : s;
     sv.disabled = true; sv.textContent = kirim==='daftar' ? '⏳ MEMPROSES PENDAFTARAN…' : '⏳ MENYIMPAN...';
     try{
+      if(!/^\d{16}$/.test(amb('gbNik'))) throw new Error('NIK harus tepat 16 digit angka.');
+      if(!/^\d{16}$/.test(amb('gbNoKK'))) throw new Error('No Kartu Keluarga harus tepat 16 digit angka.');
+      if(!/^\d{5}$/.test(amb('gbKodePos'))) throw new Error('Kode Pos harus 5 digit angka.');
       const payload = {
         Nama: atas(amb('gbNama')), Gelar: atas(amb('gbGelar')), JK: el('gbJk').value,
         TempatLahir: atas(amb('gbTempatLahir')), TglLahir: amb('gbTglLahir'), Jabatan: el('gbJabatan').value,
