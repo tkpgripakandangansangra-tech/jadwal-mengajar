@@ -382,7 +382,7 @@ function pesanAuth(t, sukses){
 }
 function teksErr(e){
   const c = (e&&e.code)||''; const m = (e&&e.message)||String(e);
-  if(c.indexOf('permission-denied')>-1 || m.indexOf('permission-denied')>-1) return 'Akses Firestore ditolak — periksa rules v8.2 di Firebase Console.';
+  if(c.indexOf('permission-denied')>-1 || m.indexOf('permission-denied')>-1) return 'Akses Firestore ditolak — periksa rules v8.3 di Firebase Console.';
   if(c.indexOf('invalid-credential')>-1 || c.indexOf('wrong-password')>-1 || c.indexOf('user-not-found')>-1) return 'E-mail atau sandi salah.';
   if(c.indexOf('email-already-in-use')>-1) return 'E-mail sudah dipakai — sistem akan melengkapi pendaftaran otomatis.';
   if(c.indexOf('weak-password')>-1) return 'Sandi minimal 6 karakter.';
@@ -4324,7 +4324,7 @@ async function resetTahunan(){
   }catch(_){ gagalAk = -1; }
   await muatUlangGuru();
   if(gagal.length || gagalAk){
-    toast('⚠️ Reset sebagian — gagal menghapus: '+gagal.join(', ')+(gagalAk?' (sebagian akun guru)':'')+'. Pastikan rules v8.2 dipublikasikan lalu ulangi.');
+    toast('⚠️ Reset sebagian — gagal menghapus: '+gagal.join(', ')+(gagalAk?' (sebagian akun guru)':'')+'. Pastikan rules v8.3 dipublikasikan lalu ulangi.');
   } else {
     toast(`✅ Reset tahunan selesai — ${terhapus} akun guru nonaktif dihapus`);
   }
@@ -4359,7 +4359,7 @@ async function resetPabrik(){
 
   if(gagalList.length || gagalAk){
     try{ await signOut(auth); }catch(_){}
-    pesanAuth('⚠️ Reset baru SEBAGIAN — gagal menghapus: '+gagalList.join(', ')+(gagalAk?' akun pengguna':'')+'. Publikasikan rules v8.2 di Firebase Console → Firestore → Rules, lalu masuk kembali dan ulangi reset.');
+    pesanAuth('⚠️ Reset baru SEBAGIAN — gagal menghapus: '+gagalList.join(', ')+(gagalAk?' akun pengguna':'')+'. Publikasikan rules v8.3 di Firebase Console → Firestore → Rules, lalu masuk kembali dan ulangi reset.');
     return;
   }
 
