@@ -115,8 +115,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #atas{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:linear-gradient(90deg,#064E3B,#1E3A8A);box-shadow:var(--bayang);position:sticky;top:0;z-index:40}
 #atasSekolah{text-align:left;flex:1;min-width:0}
 .atasKop{display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
-.atasLogo{width:52px;height:52px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.15);flex-shrink:0}
-.atasLogo.default{display:flex;align-items:center;justify-content:center;font-size:26px}
+.atasLogo{width:57px;height:57px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.15);flex-shrink:0}
+.atasLogo.default{display:flex;align-items:center;justify-content:center;font-size:29px}
 .atasBaris1{font-family:'Baloo 2';font-size:24px;font-weight:700;color:#fff;line-height:1.15}
 .atasBaris2{font-size:16px;color:rgba(255,255,255,.92)}
 .atasBaris3{font-size:16px;font-weight:600;color:#FDE68A}
@@ -226,7 +226,6 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .ijinHariBadan .sesiPilih{display:flex;margin:3px 0}
 #menu .menuBtn[data-modul="ijin"],#menu .menuBtn[data-modul="ijinSaya"]{background:linear-gradient(135deg,#7C2D12,#F97316)}
 #menu .menuBtn[data-modul="pengganti"]{background:linear-gradient(135deg,#164E63,#0EA5E9)}
-#menu .menuBtn[data-modul="statIjin"]{background:linear-gradient(135deg,#064E3B,#059669)}
 #areaCetak .suratBody .tabelMini th{background:#E2E8F0;color:#000;border:1px solid #000}
 #areaCetak .suratBody .tabelMini td{border:1px solid #000;color:#000}
 @page potret{size:A4 portrait;margin:15mm 20mm}
@@ -343,7 +342,7 @@ const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
   operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
-  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['statIjin','📊','#059669','Statistik Ijin'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
+  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
   guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['lisanSaya','🎤','#F97316','Ujian Lisan'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
@@ -1061,7 +1060,7 @@ function chatGambar(){
   el('chatKepala').innerHTML = `${CHAT.view==='obrolan'
       ? `<div><button type="button" class="btnIkon" id="chatKembali" title="Kembali ke daftar">⬅</button> <b>${CHAT.lawan?esc(CHAT.lawan.NamaPengguna||''):'👥 Grup Staf'}</b><div class="kecil" style="color:rgba(255,255,255,.85)">${CHAT.lawan?'Obrolan pribadi':'Musyawarah seluruh staf sekolah'}</div></div>`
       : `<div><b>💬 Obrolan</b><div class="kecil" style="color:rgba(255,255,255,.85)">Pilih nama untuk mulai mengobrol</div></div>`}
-    <div class="barisAtas" style="margin:0"><button type="button" class="btnIkon" id="chatTutup" title="Perkecil">➖</button></div>`;
+    <div class="barisAtas" style="margin:0">${CHAT.view==='obrolan'?`<button type="button" class="btnIkon" id="chatMeet" title="Rapat Google Meet">📹</button>`:''}<button type="button" class="btnIkon" id="chatTutup" title="Perkecil">➖</button></div>`;
   let dalam = '';
   if(CHAT.view==='daftar'){
     const staf = GURU.filter(g=>(g.StatusAkun||'aktif')==='aktif' && g.EmailPengguna!==AKUN.Email).sort((a,b)=>(a.NamaPengguna||'').localeCompare(b.NamaPengguna||''));
@@ -1083,7 +1082,8 @@ function chatGambar(){
         ${!aku?`<b>${esc(m.PengirimNama||'')}</b> <span class="kecil">${labelPeran(m.Peran)}</span><br>`:''}
         ${m.Foto?`<img src="${esc(m.Foto)}" class="chatFoto" data-chatfoto="${esc(m.id)}" alt="bukti">`:''}
         ${m.Audio?`<div class="chatAudio">🎤 <audio controls preload="metadata" src="${esc(m.Audio)}"></audio></div>`:''}
-        ${m.Isi?esc(m.Isi):''}
+        ${m.Isi&&!m.Meet?esc(m.Isi):''}
+        ${m.Meet?`<div style="margin:4px 0"><a href="${esc(m.Meet)}" target="_blank" rel="noopener" style="font-weight:700;color:inherit;text-decoration:underline">🔗 ${esc(m.Isi||'Rapat Google Meet')}</a><div class="kecil" style="opacity:.75">klik untuk bergabung — dibuka di tab baru</div></div>`:''}
         <div class="kecil" style="margin-top:2px;opacity:.75">${t}${bisaPin?` · <button type="button" class="btnTeks" data-chatpin="${esc(m.id)}">${pin?'batal keputusan':'📌 jadikan keputusan'}</button>`:''}</div>
       </div>`;
     }).join('') || '<p class="kecil" style="margin:4px 2px">Belum ada pesan. Mulailah musyawarah — pesan muncul langsung tanpa muat ulang.</p>';
@@ -1104,6 +1104,7 @@ function chatGambar(){
   if(txBaru){ txBaru.value = vLama; if(fokusLama) txBaru.focus(); }
   const isiEl = el('chatIsi'); isiEl.scrollTop = isiEl.scrollHeight;
   el('chatTutup').onclick = ()=>chatMini();
+  const mt = el('chatMeet'); if(mt) mt.onclick = ()=>chatMeetModal();
   const kb = el('chatKembali'); if(kb) kb.onclick = ()=>{ CHAT.view='daftar'; CHAT.lawan=null; chatGambar(); };
   const cg = el('chatIsi').querySelector('[data-chatgrup]'); if(cg) cg.onclick = ()=>{ CHAT.view='obrolan'; CHAT.lawan=null; chatGambar(); };
   el('chatIsi').querySelectorAll('[data-chatlawan]').forEach(b=>b.onclick=()=>{
@@ -1194,6 +1195,29 @@ async function chatSuaraKirim(){
     chatGambar();
   }catch(err){ toast('⛔ '+teksErr(err)); }
 }
+function chatMeetModal(){
+  bukaModal('📹 Rapat Google Meet', `
+    <p class="kecil">Cara mengundang staf ke rapat dadakan:</p>
+    <ol class="kecil" style="margin:6px 0 10px;padding-left:18px">
+      <li>Klik <a href="https://meet.google.com/new" target="_blank" rel="noopener"><b>📹 Buat rapat baru</b></a> — tab baru terbuka.</li>
+      <li>Di halaman Google Meet, salin tautan rapat — contoh: meet.google.com/abc-defg-hij</li>
+      <li>Tempel tautan di bawah, lalu kirim ke obrolan ini.</li>
+    </ol>
+    <input type="text" id="meetTautan" placeholder="tempel tautan / kode rapat Meet…" autocomplete="off">
+    <div class="barisTombol"><button type="button" class="btn utama" id="meetKirim">Kirim ke Obrolan</button></div>`,
+    [{label:'Tutup'}]);
+  el('meetKirim').onclick = async ()=>{
+    let v = (el('meetTautan').value||'').trim().replace(/\s+/g,'');
+    if(!v){ toast('⛔ Tempel dulu tautan atau kode rapat Meet'); return; }
+    if(!/^https?:\/\//i.test(v)) v = /meet\.google\.com\//i.test(v) ? 'https://'+v.replace(/^\/+/,'') : 'https://meet.google.com/'+v.replace(/^\/+/,'');
+    el('modalBg').hidden = true;
+    try{
+      await addDoc(collection(db,'chat_pesan'), {SekolahId:AKUN.SekolahId, Ruang:chatRuang(), PengirimEmail:AKUN.Email, PengirimNama:AKUN.NamaPengguna||'', Peran:AKUN.Peran, Isi:'📹 Rapat Google Meet', Meet:v, Foto:'', Tipe:'pesan', DibuatPada:serverTimestamp()});
+      toast('📹 Tautan rapat terkirim ke obrolan');
+      chatGambar();
+    }catch(err){ toast('⛔ '+teksErr(err)); }
+  };
+}
 async function chatPin(id){
   const m = CHAT.semua.find(x=>x.id===id); if(!m) return;
   const jadi = m.Tipe!=='keputusan';
@@ -1231,7 +1255,7 @@ async function bukaModul(n){
 const MODUL = {
   beranda: modBeranda, susun: modSusun, ujian: modUjian, kelas: modKelas, guru: modGuru, laporan: modLaporan,
   pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
-  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, statIjin: modStatIjin, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
+  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
   lisan: async ()=>{ await modLisan('lisan'); },
   lisanSaya: async ()=>{ await modLisan('lisanSaya'); },
   alatMigrasi: modMigrasi
@@ -1251,14 +1275,17 @@ async function modBeranda(isi){
       <div class="kartu kecil">Total JP disetujui seminggu: <b>${j.length} JP</b></div>`;
     return;
   }
-  const [k, m, jd, us] = await Promise.all([
+  const ks = AKUN.Peran==='kepala_sekolah';
+  const [k, m, jd, us, ij] = await Promise.all([
     getDocs(query(collection(db,'kelas'), where('SekolahId','==',AKUN.SekolahId))),
     getDocs(query(collection(db,'mapel_kelas'), where('SekolahId','==',AKUN.SekolahId))),
     getDocs(query(collection(db,'jadwal'), where('SekolahId','==',AKUN.SekolahId))),
-    getDocs(query(collection(db,'usulan'), where('SekolahId','==',AKUN.SekolahId)))
+    getDocs(query(collection(db,'usulan'), where('SekolahId','==',AKUN.SekolahId))),
+    ks ? getDocs(query(collection(db,'pengajuan_ijin'), where('SekolahId','==',AKUN.SekolahId))) : Promise.resolve(null)
   ]);
   const usulan = us.docs.map(d=>d.data());
   const guru = GURU.filter(g=>g.Peran==='guru' && (g.StatusAkun||'aktif')==='aktif');
+  if(ks){ BER.ijin = ij.docs.map(d=>({id:d.id,...d.data()})); BER.pilih = {ijin:null, guru:null, siswa:null}; }
   isi.innerHTML = `<h1 class="judul">Beranda — ${esc(SEKOLAH.NamaSekolah||'')}</h1>
     <div class="statBaris">
       <div class="stat"><span>🎓</span><b>${k.size}</b>Kelas</div>
@@ -1266,8 +1293,10 @@ async function modBeranda(isi){
       <div class="stat"><span>👨‍🏫</span><b>${guru.length}</b>Guru</div>
       <div class="stat"><span>🗓️</span><b>${jd.size}</b>JP Terpasang</div>
     </div>
+    ${ks ? `<div class="kartu" id="brStatIjin"></div><div class="kartu" id="brStatGuru"></div><div class="kartu" id="brStatSiswa"></div>` : ''}
     <div class="kartu"><h3>📋 Status usulan jadwal</h3>
     ${usulan.length ? usulan.map(u=>`<div class="barisAtas" style="margin:6px 0"><b>${esc(u.NamaKelas||'')}</b> ${chipStatus(u.Status)}</div>`).join('') : '<p class="kecil">Belum ada usulan — susun jadwal di menu Susun Jadwal.</p>'}</div>`;
+  if(ks) brStatAwal();
 }
 
 /* ---------- susun jadwal ---------- */
@@ -3943,64 +3972,80 @@ async function migJalankan(){
   </div>`;
 }
 
-/* ---------- statistik ijin ---------- */
+/* ---------- statistik beranda KS (1 tahun, klik bulan untuk detail) ---------- */
+let BER = {ijin:[], ta:'', pilih:{ijin:null, guru:null, siswa:null}};
 function taDari(milidetik){
   const d = new Date(milidetik);
   const y = d.getFullYear();
   return d.getMonth() >= 6 ? `${y}/${y+1}` : `${y-1}/${y}`; // TA = Juli s.d. Juni
 }
-async function modStatIjin(isi){
-  const p = await getDocs(query(collection(db,'pengajuan_ijin'), where('SekolahId','==',AKUN.SekolahId)));
-  const semua = p.docs.map(d=>({id:d.id,...d.data()}));
-  const taOf = x => x.DibuatPada?.seconds ? taDari(x.DibuatPada.seconds*1000) : (x.DibuatPada ? taDari(new Date(x.DibuatPada).getTime()) : (x.TahunAjaran || '-'));
-  const taAktif = SEKOLAH.TahunAjaran || taDari(Date.now());
-  const daftarTa = [...new Set([taAktif, ...semua.map(taOf)].filter(t=>t && t!=='-'))].sort().reverse();
-  isi.innerHTML = `<h1 class="judul">📊 Statistik Ijin Guru</h1>
-    <div class="kartu">
-      <div class="barisTombol" style="align-items:flex-end">
-        <label style="max-width:220px">Tahun Pelajaran
-          <select id="siTa">${daftarTa.map(t=>`<option value="${esc(t)}"${t===taAktif?' selected':''}>${esc(t)}</option>`).join('')}</select>
-        </label>
-      </div>
-      <div id="siIsi"></div>
-    </div>`;
-  const tampil = ()=>{
-    const ta = el('siTa').value;
-    const data = semua.filter(x=>taOf(x)===ta);
-    const BLN = ['Jul','Agu','Sep','Okt','Nov','Des','Jan','Feb','Mar','Apr','Mei','Jun'];
-    const bulanan = new Array(12).fill(0);
-    const perGuru = {};
-    const st = {peng:0, sesi:0, ok:0, tolak:0, tunggu:0};
-    data.forEach(x=>{
-      const n = (x.Sesi||[]).length;
-      st.peng++; st.sesi += n;
-      if(x.Status==='disetujui') st.ok++; else if(x.Status==='ditolak') st.tolak++; else st.tunggu++;
-      const k = x.GuruEmail || x.GuruNama || '(?)';
-      const r = perGuru[k] = perGuru[k] || {nama:x.GuruNama||k, peng:0, sesi:0, ok:0, tolak:0, tunggu:0, terakhir:0};
-      r.peng++; r.sesi += n; r.terakhir = Math.max(r.terakhir, x.DibuatPada?.seconds||0);
-      if(x.Status==='disetujui') r.ok++; else if(x.Status==='ditolak') r.tolak++; else r.tunggu++;
-      if(x.DibuatPada?.seconds){
-        const d = new Date(x.DibuatPada.seconds*1000);
-        let m = d.getMonth()-6; if(m<0) m += 12;
-        bulanan[m] += n;
-      }
-    });
-    if(!data.length){ el('siIsi').innerHTML = '<p class="kecil">Belum ada data ijin pada tahun pelajaran ini.</p>'; return; }
-    const mx = Math.max(...bulanan, 1);
-    const guruPernah = Object.keys(perGuru).length;
-    const guruAktif = GURU.filter(g=>g.Peran==='guru' && (g.StatusAkun||'aktif')==='aktif').length;
-    const baris = Object.values(perGuru).sort((a,b)=>b.sesi-a.sesi || b.peng-a.peng);
-    el('siIsi').innerHTML = `
-      <div class="kecil" style="margin:8px 0">📅 TA ${esc(ta)} — <b>${st.peng}</b> pengajuan · <b>${st.sesi}</b> sesi/JP ijin · ${guruPernah} dari ${guruAktif} guru pernah ijin · 👍 ${st.ok} · ❌ ${st.tolak} · ⏳ ${st.tunggu}</div>
-      <h3 style="margin:12px 0 4px">📅 Sebaran per bulan (jumlah sesi)</h3>
-      ${BLN.map((b,i)=>`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><span style="width:36px;font-size:12px">${b}</span><div style="flex:1;background:#0EA5E922;border-radius:6px;height:16px;overflow:hidden"><div style="width:${Math.round(bulanan[i]/mx*100)}%;background:linear-gradient(90deg,#0EA5E9,#10B981);height:16px"></div></div><span style="width:36px;font-size:12px;text-align:right">${bulanan[i]}</span></div>`).join('')}
-      <h3 style="margin:14px 0 4px">🏆 Peringkat guru (dari yang paling sering ijin)</h3>
-      <table class="tabelMini"><tr><th>#</th><th>Nama Guru</th><th>Pengajuan</th><th>Sesi Ijin</th><th>👍</th><th>❌</th><th>⏳</th><th>Terakhir</th></tr>
-        ${baris.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.nama)}</td><td>${r.peng}</td><td><b>${r.sesi}</b></td><td>${r.ok}</td><td>${r.tolak}</td><td>${r.tunggu}</td><td class="kecil">${r.terakhir ? new Date(r.terakhir*1000).toLocaleDateString('id-ID') : '-'}</td></tr>`).join('')}
-      </table>`;
-  };
-  el('siTa').onchange = tampil;
-  tampil();
+const BLN_TA = [['Jul',6],['Agu',7],['Sep',8],['Okt',9],['Nov',10],['Des',11],['Jan',0],['Feb',1],['Mar',2],['Apr',3],['Mei',4],['Jun',5]];
+function brTaOf(x){ return x.DibuatPada?.seconds ? taDari(x.DibuatPada.seconds*1000) : (x.TahunAjaran || '-'); }
+function brBulanIjin(x){ return x.DibuatPada?.seconds ? new Date(x.DibuatPada.seconds*1000).getMonth() : -1; }
+function brBulanTahun(mi){ const y = parseInt((BER.ta||'').split('/')[0],10) || new Date().getFullYear(); return mi>=6 ? y : y+1; }
+function brNamaBulan(mi){ return ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][mi] || ''; }
+function brIjinDalamTa(){ return BER.ijin.filter(x=>brTaOf(x)===BER.ta); }
+function brChips(key, nilai){
+  return BLN_TA.map((b,i)=>`<button type="button" class="chipHari${BER.pilih[key]===b[1]?' on':''}" data-brbln="${key}:${b[1]}" style="min-width:52px">${b[0]}${nilai!=null?`<b> ${nilai[i]}</b>`:''}</button>`).join('');
+}
+function brIjinRender(){
+  const dalam = brIjinDalamTa();
+  const bul = new Array(12).fill(0).map(()=>({peng:0,sesi:0,ok:0,tolak:0,tunggu:0}));
+  dalam.forEach(x=>{
+    const i = BLN_TA.findIndex(b=>b[1]===brBulanIjin(x));
+    if(i<0) return;
+    const n = (x.Sesi||[]).length;
+    bul[i].peng++; bul[i].sesi += n;
+    if(x.Status==='disetujui') bul[i].ok++; else if(x.Status==='ditolak') bul[i].tolak++; else bul[i].tunggu++;
+  });
+  const tot = bul.reduce((a,b)=>({peng:a.peng+b.peng, sesi:a.sesi+b.sesi, ok:a.ok+b.ok, tolak:a.tolak+b.tolak, tunggu:a.tunggu+b.tunggu}), {peng:0,sesi:0,ok:0,tolak:0,tunggu:0});
+  const p = BER.pilih.ijin;
+  let detail = '';
+  if(p!=null){
+    const i = BLN_TA.findIndex(b=>b[1]===p);
+    const bln = bul[i] || {peng:0,sesi:0,ok:0,tolak:0,tunggu:0};
+    const list = dalam.filter(x=>brBulanIjin(x)===p).sort((a,b)=>((b.DibuatPada?.seconds)||0)-((a.DibuatPada?.seconds)||0));
+    detail = `<div style="margin-top:8px;border-top:1px solid var(--garis);padding-top:8px">
+      <b>📅 ${brNamaBulan(p)} ${brBulanTahun(p)}</b> — ${bln.peng} pengajuan · ${bln.sesi} sesi ijin · 👍 ${bln.ok} · ❌ ${bln.tolak} · ⏳ ${bln.tunggu}
+      <table class="tabelMini"><tr><th>Guru</th><th>Sesi</th><th>Status</th></tr>
+        ${list.map(x=>`<tr><td>${esc(x.GuruNama||x.GuruEmail||'')}</td><td>${(x.Sesi||[]).length}</td><td>${chipStatus(x.Status)}</td></tr>`).join('') || '<tr><td colspan="3" class="kecil">Tidak ada ijin pada bulan ini</td></tr>'}
+      </table>
+      <p class="kecil" style="margin-top:4px">Klik bulan yang sama lagi untuk kembali ke tampilan setahun.</p></div>`;
+  }
+  el('brStatIjin').innerHTML = `<h3>🌴 Ijin Guru — TA ${esc(BER.ta)} (1 tahun)</h3>
+    <div class="kecil">Total ${tot.peng} pengajuan · ${tot.sesi} sesi/JP ijin · 👍 ${tot.ok} · ❌ ${tot.tolak} · ⏳ ${tot.tunggu}. Klik bulan untuk rincian bulan itu.</div>
+    <div class="barisTombol">${brChips('ijin', bul.map(b=>b.sesi))}</div>
+    ${detail}`;
+}
+function brKehadiranRender(key){
+  const p = BER.pilih[key];
+  const judul = key==='guru' ? '👨‍🏫 Kehadiran Guru' : '🎓 Kehadiran Siswa';
+  const siapa = key==='guru' ? 'kehadiran guru' : 'kehadiran siswa';
+  let detail = '';
+  if(p!=null){
+    detail = `<div style="margin-top:8px;border-top:1px solid var(--garis);padding-top:8px"><b>📅 ${brNamaBulan(p)} ${brBulanTahun(p)}</b>
+      <p class="kecil" style="margin-top:4px">Belum ada data presensi bulan ini. Jumlah hadir, ijin, dan alfa ${siapa} akan tampil otomatis di sini setelah modul presensi harian aktif.</p>
+      <p class="kecil">Klik bulan yang sama lagi untuk kembali ke tampilan setahun.</p></div>`;
+  }
+  el(key==='guru' ? 'brStatGuru' : 'brStatSiswa').innerHTML = `<h3>${judul} — TA ${esc(BER.ta)} (1 tahun)</h3>
+    <p class="kecil" style="margin:2px 0">Menunggu modul presensi harian — setelah aktif, statistik ${siapa} terisi otomatis di sini, per bulan.</p>
+    <div class="barisTombol">${brChips(key, null)}</div>
+    ${detail}`;
+}
+function brStatKlik(e){
+  const b = e.target.closest('[data-brbln]');
+  if(!b) return;
+  const bag = b.dataset.brbln.split(':');
+  const key = bag[0], mi = parseInt(bag[1],10);
+  BER.pilih[key] = BER.pilih[key]===mi ? null : mi;
+  if(key==='ijin') brIjinRender(); else brKehadiranRender(key);
+}
+function brStatAwal(){
+  BER.ta = SEKOLAH.TahunAjaran || taDari(Date.now());
+  brIjinRender();
+  brKehadiranRender('guru');
+  brKehadiranRender('siswa');
+  ['brStatIjin','brStatGuru','brStatSiswa'].forEach(id=>{ el(id).onclick = brStatKlik; });
 }
 
 /* ---------- reset ---------- */
