@@ -1248,9 +1248,9 @@ async function bukaModul(n){
   document.querySelectorAll('#menu .menuBtn').forEach(b=>b.classList.toggle('aktif', b.dataset.modul===n));
   const isi = el('isi');
   isi.innerHTML = '<div class="kartu">Memuat…</div>';
+  tabUjianAtur(n);
   try{ const fn = MODUL[n]; if(fn) await fn(isi); }
   catch(err){ isi.innerHTML = '<div class="kartu">⛔ '+teksErr(err)+'</div>'; }
-  tabUjianAtur(n);
 }
 const MODUL = {
   beranda: modBeranda, susun: modSusun, kelas: modKelas, guru: modGuru, laporan: modLaporan,
@@ -1680,13 +1680,12 @@ function hitungSlotUjian(u){
 }
 async function modUjian(isi){
   const kelas = await ambilKelas();
-  if(!kelas.length){ isi.innerHTML = '<h1 class="judul">📝 Jadwal Ujian</h1><div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Data Kelas</b>.</p></div>'; return; }
+  if(!kelas.length){ isi.innerHTML = '<div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Data Kelas</b>.</p></div>'; return; }
   UJ.daftarKelas = kelas;
   if(!UJ.jenis) UJ.jenis = (new Date().getMonth()+1) >= 7 ? 'UTS' : 'UAS';
   UJ.semester = UJ.jenis==='UTS' ? 'Ganjil' : 'Genap';
   UJ.terpilih = null; UJ.pending = null; UJ.minggu = '';
-  isi.innerHTML = `<h1 class="judul">📝 Jadwal UTS & UAS</h1>
-    <div class="kartu barisAtas">
+  isi.innerHTML = `<div class="kartu barisAtas">
       <label style="margin:0">Ujian <select id="ujJenis" style="width:auto">
         <option value="UTS"${UJ.jenis==='UTS'?' selected':''}>UTS — Ujian Tengah Semester (Ganjil)</option>
         <option value="UAS"${UJ.jenis==='UAS'?' selected':''}>UAS — Ujian Akhir Semester (Genap)</option>
@@ -3549,7 +3548,7 @@ function tabUjianBar(){
   if(!bar){
     bar = document.createElement('div');
     bar.id = 'ujTabBar'; bar.className = 'ujTabBar';
-    bar.innerHTML = '<button type="button" class="ujTab" data-uftab="uts">1. Jadwal UTS/UAS</button><button type="button" class="ujTab oranye" data-uftab="lisan">2. UJIAN LISAN</button>';
+    bar.innerHTML = '<button type="button" class="ujTab" data-uftab="uts">Jadwal UTS/UAS</button><button type="button" class="ujTab oranye" data-uftab="lisan">Ujian Lisan</button>';
     bar.onclick = e=>{
       const t = e.target.closest('[data-uftab]');
       if(t && t.dataset.uftab!==UJ_TAB) tabUjianPilih(t.dataset.uftab);
@@ -3562,8 +3561,19 @@ function tabUjianTampil(){
   const bar = tabUjianBar();
   bar.querySelectorAll('.ujTab').forEach(b=>b.classList.toggle('on', b.dataset.uftab===UJ_TAB));
 }
+function tabUjianJudul(){
+  let h = document.getElementById('ujJudul');
+  if(!h){
+    h = document.createElement('h1');
+    h.id = 'ujJudul'; h.className = 'judul'; h.textContent = '📝 Jadwal Ujian';
+    el('isi').parentNode.insertBefore(h, document.getElementById('ujTabBar') || el('isi'));
+  }
+  return h;
+}
 function tabUjianAtur(n){
+  const judul = tabUjianJudul();
   const bar = tabUjianBar();
+  judul.hidden = n!=='ujian';
   bar.hidden = n!=='ujian';
   if(n==='ujian'){ UJ_TAB='uts'; tabUjianTampil(); }
 }
@@ -3582,7 +3592,7 @@ async function tabUjianPilih(tab){
     await bukaModul('ujian');
   }
 }
-let UJG = {kelasId:'', tampil:'ajar'};
+let UJG = {kelasId:'', tampil:'ajar', semua:false};
 async function modUjianGuru(isi){
   const [ujS, ajarS, daftarKelas] = await Promise.all([
     getDocs(query(collection(db,'jadwal_ujian'), where('SekolahId','==',AKUN.SekolahId))),
@@ -3600,9 +3610,8 @@ async function modUjianGuru(isi){
         const tglStr = t ? t.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
         return `<tr><td>${esc(tglStr)}</td><td>${esc((u.JamMulai||'').replace(/:/g,'.'))}–${esc((u.JamSelesai||'').replace(/:/g,'.'))}</td><td><b style="color:${u.Warna||'inherit'}">${esc(u.NamaMapel||'')}</b></td><td>${esc(u.NamaKelas||'')}</td><td>${esc(u.Ruangan||'—')}</td></tr>`;
       }).join('')}</table></div>` : `<p class="kecil">${kosong}</p>`;
-  isi.innerHTML = `<h1 class="judul">📝 Jadwal Ujian</h1>
-    <div class="kartu">
-      <h3 id="ujGuruJudul"></h3>
+  isi.innerHTML = `<div class="kartu">
+      <h3 id="ujGuruJudul" hidden></h3>
       <div id="ujGuruIsi"></div>
     </div>`;
   const gambarLisan = async ()=>{
@@ -3615,6 +3624,7 @@ async function modUjianGuru(isi){
   const gambar = async ()=>{
     const judul = el('ujGuruJudul'); const wadah = el('ujGuruIsi');
     if(UJ_TAB==='lisan'){
+      judul.hidden = false;
       judul.textContent = '🎤 Jadwal Ujian Lisan — semua kelas';
       if(!daftarKelas.length){ wadah.innerHTML = '<p class="kecil">Belum ada kelas — dikelola oleh Operator.</p>'; return; }
       wadah.innerHTML = `<div class="barisAtas"><label style="margin:0">Kelas <select id="ujGuruKelas" style="width:auto">${daftarKelas.map(k=>`<option value="${k.id}"${k.id===UJG.kelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label></div>
@@ -3622,30 +3632,27 @@ async function modUjianGuru(isi){
       el('ujGuruKelas').onchange = async e=>{ UJG.kelasId = e.target.value; el('ujGuruLisanWrap').innerHTML = await gambarLisan(); };
       el('ujGuruLisanWrap').innerHTML = await gambarLisan();
     } else {
-      judul.textContent = '📝 Jadwal UTS/UAS';
-      const chips = `<div class="barisAtas">
+      judul.hidden = true;
+      const tabelSemua = ()=>{
+        if(!daftarKelas.length) return '<p class="kecil">Belum ada kelas — dikelola oleh Operator.</p>';
+        const ujKelas = semuaUjian.filter(u=>u.KelasId===UJG.kelasId);
+        return `<div class="barisAtas"><label style="margin:0">Kelas <select id="ujGuruKelas" style="width:auto">${daftarKelas.map(k=>`<option value="${k.id}"${k.id===UJG.kelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label></div>
+          <div style="margin-top:8px">${ujKelas.length ? `<div class="geserX"><table class="tabelMini"><tr><th>Jenis</th><th>Hari, Tanggal</th><th>Jam</th><th>Mata Pelajaran</th><th>Pengawas</th><th>Ruangan</th></tr>
+            ${ujKelas.map(u=>{
+              const t = u.Tanggal ? new Date(u.Tanggal+'T00:00:00') : null;
+              const tglStr = t ? t.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
+              return `<tr><td>${esc(u.Jenis||'')}</td><td>${esc(tglStr)}</td><td>${esc((u.JamMulai||'').replace(/:/g,'.'))}–${esc((u.JamSelesai||'').replace(/:/g,'.'))}</td><td><b style="color:${u.Warna||'inherit'}">${esc(u.NamaMapel||'')}</b></td><td>${esc(u.PengawasNama||'—')}</td><td>${esc(u.Ruangan||'—')}</td></tr>`;
+            }).join('')}</table></div>` : '<p class="kecil">Belum ada jadwal ujian untuk kelas ini.</p>'}</div>`;
+      };
+      wadah.innerHTML = `<div class="barisAtas">
           <button type="button" class="chipHari${UJG.tampil==='ajar'?' on':''}" data-ujgtampil="ajar">📚 Jadwal Pelajaran Saya</button>
           <button type="button" class="chipHari${UJG.tampil==='awas'?' on':''}" data-ujgtampil="awas">🧑‍🏫 Jadwal Saya sebagai Pengawas</button>
-          <button type="button" class="chipHari${UJG.tampil==='semua'?' on':''}" data-ujgtampil="semua">🏫 Semua Kelas</button>
-        </div>`;
-      let dalam = '';
-      if(UJG.tampil==='semua'){
-        if(!daftarKelas.length){ dalam = '<p class="kecil">Belum ada kelas — dikelola oleh Operator.</p>'; }
-        else {
-          const ujKelas = semuaUjian.filter(u=>u.KelasId===UJG.kelasId);
-          dalam = `<div class="barisAtas"><label style="margin:0">Kelas <select id="ujGuruKelas" style="width:auto">${daftarKelas.map(k=>`<option value="${k.id}"${k.id===UJG.kelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label></div>
-            <div style="margin-top:8px">${ujKelas.length ? `<div class="geserX"><table class="tabelMini"><tr><th>Jenis</th><th>Hari, Tanggal</th><th>Jam</th><th>Mata Pelajaran</th><th>Pengawas</th><th>Ruangan</th></tr>
-              ${ujKelas.map(u=>{
-                const t = u.Tanggal ? new Date(u.Tanggal+'T00:00:00') : null;
-                const tglStr = t ? t.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
-                return `<tr><td>${esc(u.Jenis||'')}</td><td>${esc(tglStr)}</td><td>${esc((u.JamMulai||'').replace(/:/g,'.'))}–${esc((u.JamSelesai||'').replace(/:/g,'.'))}</td><td><b style="color:${u.Warna||'inherit'}">${esc(u.NamaMapel||'')}</b></td><td>${esc(u.PengawasNama||'—')}</td><td>${esc(u.Ruangan||'—')}</td></tr>`;
-              }).join('')}</table></div>` : '<p class="kecil">Belum ada jadwal ujian untuk kelas ini.</p>'}</div>`;
-        }
-      } else {
-        dalam = `<div style="margin-top:8px">${UJG.tampil==='ajar' ? tabelUjianGuru(ujianAjar, 'Belum ada jadwal ujian untuk mata pelajaran yang Anda ampu.') : tabelUjianGuru(ujianAwasi, 'Anda belum ditugaskan menjadi pengawas ujian.')}</div>`;
-      }
-      wadah.innerHTML = chips + dalam;
+        </div>
+        <div style="margin-top:8px">${UJG.tampil==='ajar' ? tabelUjianGuru(ujianAjar, 'Belum ada jadwal ujian untuk mata pelajaran yang Anda ampu.') : tabelUjianGuru(ujianAwasi, 'Anda belum ditugaskan menjadi pengawas ujian.')}</div>
+        <div class="barisTombol" style="margin-top:12px"><button type="button" class="btn" id="ujGuruSemua">🏫 Semua Kelas ${UJG.semua?'▴':'▾'}</button></div>
+        ${UJG.semua ? tabelSemua() : ''}`;
       wadah.querySelectorAll('[data-ujgtampil]').forEach(b=>b.onclick=()=>{ UJG.tampil = b.dataset.ujgtampil; gambar(); });
+      el('ujGuruSemua').onclick = ()=>{ UJG.semua = !UJG.semua; gambar(); };
       const selK = el('ujGuruKelas'); if(selK) selK.onchange = e=>{ UJG.kelasId = e.target.value; gambar(); };
     }
   };
