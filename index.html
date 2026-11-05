@@ -342,7 +342,7 @@ const db = getFirestore(app);
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
-  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
+  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Kelas & Pelajaran'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
   kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
   guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['ujian','📝','#DB2777','Jadwal Ujian'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
@@ -1246,7 +1246,7 @@ async function bukaModul(n){
   catch(err){ isi.innerHTML = '<div class="kartu">⛔ '+teksErr(err)+'</div>'; }
 }
 const MODUL = {
-  beranda: modBeranda, susun: modSusun, kelas: modKelas, guru: modGuru, laporan: modLaporan,
+  beranda: modBeranda, susun: modSusun, guru: modGuru, laporan: modLaporan,
   ujian: async (isi)=>{ if(AKUN.Peran==='guru'){ await modUjianGuru(isi); } else { await modUjian(isi); } },
   pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
   ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
@@ -1295,7 +1295,7 @@ async function modBeranda(isi){
 /* ---------- susun jadwal ---------- */
 async function modSusun(isi){
   const kelas = await ambilKelas();
-  if(!kelas.length){ isi.innerHTML = '<h1 class="judul">🗓️ Susun Jadwal</h1><div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Data Kelas</b>.</p></div>'; return; }
+  if(!kelas.length){ isi.innerHTML = '<h1 class="judul">🗓️ Susun Jadwal</h1><div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Daftar Kelas &amp; Pelajaran</b>.</p></div>'; return; }
   await muatKatalog();
   SK.daftarKelas = kelas;
   isi.innerHTML = `<h1 class="judul">🗓️ Susun Jadwal per Kelas</h1>
@@ -1673,7 +1673,7 @@ function hitungSlotUjian(u){
 }
 async function modUjian(isi){
   const kelas = await ambilKelas();
-  if(!kelas.length){ isi.innerHTML = '<div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Data Kelas</b>.</p></div>'; return; }
+  if(!kelas.length){ isi.innerHTML = '<div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Daftar Kelas &amp; Pelajaran</b>.</p></div>'; return; }
   UJ.daftarKelas = kelas;
   if(!UJ.jenis) UJ.jenis = (new Date().getMonth()+1) >= 7 ? 'UTS' : 'UAS';
   UJ.semester = UJ.jenis==='UTS' ? 'Ganjil' : 'Genap';
@@ -2076,34 +2076,6 @@ async function modLaporan(isi){
 }
 
 /* ---------- data kelas ---------- */
-async function modKelas(isi){
-  const kelas = await ambilKelas();
-  isi.innerHTML = `<h1 class="judul">🎓 Data Kelas</h1>
-    <div class="kartu barisAtas">
-      <input id="kNamaBaru" placeholder="Nama kelas baru (mis. VII A)" style="flex:1;min-width:180px">
-      <button id="kTambah" class="btn utama">＋ Tambah Kelas</button>
-    </div>
-    <div class="kartu"><table class="tabelMini"><tr><th>Kelas</th><th>Urutan</th><th>Tahun Ajaran</th><th>Aksi</th></tr>
-    ${kelas.map(k=>`<tr><td><b>${esc(k.NamaKelas)}</b></td><td>${k.Urutan||''}</td><td>${esc(k.TahunAjaran||'')}</td>
-      <td><button class="btnIkon" data-ganti="${k.id}" data-nama="${esc(k.NamaKelas)}">✏️</button>
-      <button class="btnIkon" data-hapus-k="${k.id}">🗑</button></td></tr>`).join('')}
-    </table></div>`;
-    el('kTambah').onclick = async ()=>{
-    const n = el('kNamaBaru').value.trim();
-    if(!n){ toast('⚠️ Isi nama kelas dulu'); return; }
-    if(kelas.some(k=>(k.NamaKelas||'').toUpperCase()===n.toUpperCase())){ toast('⚠️ Kelas '+n+' sudah ada'); return; }
-    try{
-      await setDoc(doc(db,'kelas', AKUN.SekolahId+'_K'+Date.now().toString(36)), {SekolahId:AKUN.SekolahId, NamaKelas:n, TahunAjaran:SEKOLAH.TahunAjaran||taDefault(), Urutan:kelas.length+1});
-      const daftar = await ambilKelas();
-      for(let i=0;i<daftar.length;i++){
-        if((daftar[i].Urutan||0)!==i+1) await updateDoc(doc(db,'kelas',daftar[i].id),{Urutan:i+1});
-      }
-      toast('✅ Kelas ditambahkan — daftar otomatis tersusun urut');
-      modKelas(isi);
-    }catch(err){ toast('⛔ '+teksErr(err)); }
-  };
-}
-
 /* ---------- pengaturan ---------- */
 async function modPengaturan(isi){
   let logoData = SEKOLAH.LogoSekolah||'';
@@ -3005,17 +2977,38 @@ async function muatKatalog(){
     MP_SEK = [];
   }
 }
+function modalTambahKelas(isi){
+  bukaModal('＋ Tambah Kelas', `<label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Nama kelas baru</label><input id="mpKelasNama" placeholder="mis. VII A" style="width:100%;text-transform:uppercase">`,
+    [{label:'Tambah', cb: async ()=>{
+      const n = String(el('mpKelasNama').value||'').trim();
+      if(!n){ toast('⚠️ Isi nama kelas dulu'); return; }
+      try{
+        const daftar = await ambilKelas();
+        if(daftar.some(k=>(k.NamaKelas||'').toUpperCase()===n.toUpperCase())){ toast('⚠️ Kelas '+n+' sudah ada'); return; }
+        await setDoc(doc(db,'kelas', AKUN.SekolahId+'_K'+Date.now().toString(36)), {SekolahId:AKUN.SekolahId, NamaKelas:n, TahunAjaran:SEKOLAH.TahunAjaran||taDefault(), Urutan:daftar.length+1});
+        for(let i=0;i<daftar.length;i++){
+          if((daftar[i].Urutan||0)!==i+1) await updateDoc(doc(db,'kelas',daftar[i].id),{Urutan:i+1});
+        }
+        toast('✅ Kelas '+n+' ditambahkan');
+        bukaModul('pelajaran');
+      }catch(err){ toast('⛔ '+teksErr(err)); }
+    }}, {label:'Batal'}]);
+}
 async function modPelajaran(isi){
   const op = AKUN.Peran === 'operator';
   const guruAktif = GURU.filter(g=>g.Peran==='guru' && (g.StatusAkun||'aktif')==='aktif');
   await muatKatalog();
   const kelas = await ambilKelas();
-  if(!kelas.length){ isi.innerHTML = '<h1 class="judul">📚 Daftar Pelajaran</h1><div class="kartu"><p>Belum ada kelas. Tambahkan dulu di menu <b>Data Kelas</b>.</p></div>'; return; }
+  if(!kelas.length){
+    isi.innerHTML = `<h1 class="judul">📚 Daftar Kelas &amp; Pelajaran</h1><div class="kartu"><p>Belum ada kelas. Klik <b>＋ Tambah Kelas</b> untuk membuat kelas pertama — pelajaran lalu diatur per kelas.</p><div class="barisAtas" style="margin-top:8px">${op?'<button type="button" id="mpKelasBaru" class="btn utama">＋ Tambah Kelas</button>':''}</div></div>`;
+    if(op) el('mpKelasBaru').onclick = ()=> modalTambahKelas(isi);
+    return;
+  }
   if(!kelas.find(k=>k.id===MP_KELAS)) MP_KELAS = kelas[0].id;
-  isi.innerHTML = `<h1 class="judul">📚 Daftar Pelajaran</h1>
+  isi.innerHTML = `<h1 class="judul">📚 Daftar Kelas &amp; Pelajaran</h1>
     <div class="kartu"><h3>📋 Katalog Pelajaran</h3>
       <p class="kecil">${op
-        ? 'Alur kerja: <b>1)</b> pilih kelas dengan tombol di bawah · <b>2)</b> klik <b>➕ Tambah Pelajaran</b> lalu ketik nama pelajarannya, isi JP/minggu &amp; pilih guru pengampunya · <b>3)</b> klik <b>💾 Simpan</b> di akhir tabel. Setelah daftar pelajaran lengkap barulah susun jadwalnya di menu <b>🗓️ Susun Jadwal</b>.'
+        ? 'Alur kerja: <b>1)</b> buat/kelola kelas lewat tombol kelas &amp; <b>＋ Tambah Kelas</b> di bawah · <b>2)</b> klik <b>➕ Tambah Pelajaran</b> lalu ketik nama pelajarannya, isi JP/minggu &amp; pilih guru pengampunya · <b>3)</b> klik <b>💾 Simpan</b> di akhir tabel. Setelah daftar pelajaran lengkap barulah susun jadwalnya di menu <b>🗓️ Susun Jadwal</b>.'
         : 'Pilih kelas dengan tombol di bawah untuk melihat pelajaran, JP/minggu, dan guru pengampunya.'}</p>
       <div class="barisAtas" style="margin-bottom:8px" id="mpKelasWrap"></div>
       <div id="mpTabel">memuat…</div>
@@ -3025,9 +3018,12 @@ async function modPelajaran(isi){
   const tambahBarisBaru = ()=>{ MPL.push({idDoc:'', Nama:'', JP:2, Warna:'', GuruEmail:''}); render(); };
   const gambarKelasBtns = ()=>{
     el('mpKelasWrap').innerHTML = kelas.map(k=>`<button type="button" class="chipHari${k.id===MP_KELAS?' on':''}" data-kelas="${k.id}">Kelas ${esc(k.NamaKelas)}</button>`).join('')
+      + (op ? '<button type="button" id="mpKelasBaru" class="btn kecil" style="margin-left:4px">＋ Tambah Kelas</button>' : '')
       + (op ? '<button type="button" id="mpBaru" class="btn utama" style="margin-left:auto">➕ Tambah Pelajaran</button>' : '');
     const bb = el('mpBaru');
     if(bb) bb.onclick = tambahBarisBaru;
+    const kb = el('mpKelasBaru');
+    if(kb) kb.onclick = ()=> modalTambahKelas(isi);
   };
   const gOpt = terpilih => '<option value="">— tanpa guru —</option>' + guruAktif.map(g=>`<option value="${esc(g.EmailPengguna)}"${g.EmailPengguna===terpilih?' selected':''}>${esc(g.NamaPengguna)}</option>`).join('');
   const gambarBaris = (m,i)=>`<tr data-i="${i}">
