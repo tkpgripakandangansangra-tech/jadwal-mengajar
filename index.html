@@ -248,7 +248,7 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
   @page{size:A4 landscape;margin:12mm}
 }
 /* ---- ujian lisan ---- */
-#menu .menuBtn[data-modul="lisan"],#menu .menuBtn[data-modul="lisanSaya"]{background:linear-gradient(135deg,#9A3412,#F97316)}
+#menu .menuBtn[data-modul="lisan"]{background:linear-gradient(135deg,#9A3412,#F97316)}
 .lisIn{padding:5px 6px;font-size:13px;border-radius:8px}
 .ujTabBar{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .ujTab{padding:10px 22px;border-radius:12px;border:1px solid rgba(148,163,184,.4);background:rgba(148,163,184,.12);font-weight:700;font-size:14px;cursor:pointer;color:inherit}
@@ -343,7 +343,7 @@ const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4
 const MENU = {
   operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Pelajaran'],['kelas','🎓','#F59E0B','Daftar Kelas'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
   kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
-  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['lisanSaya','🎤','#F97316','Ujian Lisan'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
+  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['ujian','📝','#DB2777','Jadwal Ujian'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
 
@@ -1253,11 +1253,11 @@ async function bukaModul(n){
   tabUjianAtur(n);
 }
 const MODUL = {
-  beranda: modBeranda, susun: modSusun, ujian: modUjian, kelas: modKelas, guru: modGuru, laporan: modLaporan,
+  beranda: modBeranda, susun: modSusun, kelas: modKelas, guru: modGuru, laporan: modLaporan,
+  ujian: async (isi)=>{ if(AKUN.Peran==='guru'){ await modUjianGuru(isi); } else { await modUjian(isi); } },
   pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
   ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
   lisan: async ()=>{ await modLisan('lisan'); },
-  lisanSaya: async ()=>{ await modLisan('lisanSaya'); },
   alatMigrasi: modMigrasi
 };
 
@@ -3567,6 +3567,11 @@ function tabUjianAtur(n){
 }
 async function tabUjianPilih(tab){
   UJ_TAB = tab;
+  if(AKUN.Peran==='guru'){
+    await modUjianGuru(el('isi'));
+    tabUjianTampil();
+    return;
+  }
   if(tab==='lisan'){
     await modLisan('lisan');
     document.querySelectorAll('#menu .menuBtn').forEach(b=>b.classList.toggle('aktif', b.dataset.modul==='ujian'));
@@ -3575,23 +3580,59 @@ async function tabUjianPilih(tab){
     await bukaModul('ujian');
   }
 }
+async function lisTugasSaya(){
+  const s = await getDocs(query(collection(db,'ujian_lisan'), where('SekolahId','==',AKUN.SekolahId)));
+  const tugas = [];
+  s.docs.forEach(d=>{ const data = d.data(); (data.Baris||[]).forEach(b=>{ if(b.PengujiEmail===AKUN.Email) tugas.push({kelas:data.NamaKelas||'', ...b}); }); });
+  tugas.sort((a,b)=> (a.Tanggal||'').localeCompare(b.Tanggal||'') || (Number(a.Meja)||0)-(Number(b.Meja)||0));
+  return `<div class="kartu"><h3>🧑‍🏫 Jadwal Saya sebagai Penguji</h3>
+    ${tugas.length ? `<div class="geserX"><table class="tabelMini" style="min-width:780px"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu (WIB)</th><th>Pos / Meja</th><th>Materi Ujian</th><th>Kelas</th><th>Ruangan</th></tr>
+      ${tugas.map((b,i)=>`<tr><td>${i+1}</td><td>${esc(lisTeks(b.Tanggal))}</td><td>${esc(lisWaktu(b))}</td><td>Meja ${esc(b.Meja||'')}</td><td><b>${esc(b.Materi||'')}</b></td><td>${esc(b.kelas)}</td><td>${esc(b.Ruangan||'')}</td></tr>`).join('')}</table></div>`
+      : '<p class="kecil">Belum ada tugas penguji ujian lisan untuk Anda.</p>'}
+  </div>`;
+}
+let UJG = {kelasId:''};
+async function modUjianGuru(isi){
+  const daftarKelas = await ambilKelas();
+  if(!UJG.kelasId || !daftarKelas.some(k=>k.id===UJG.kelasId)) UJG.kelasId = (daftarKelas[0]||{}).id || '';
+  isi.innerHTML = `<h1 class="judul">📝 Jadwal Ujian</h1>
+    ${await lisTugasSaya()}
+    <div class="kartu">
+      <h3 id="ujGuruJudul"></h3>
+      ${daftarKelas.length ? `<div class="barisAtas"><label style="margin:0">Kelas <select id="ujGuruKelas" style="width:auto">${daftarKelas.map(k=>`<option value="${k.id}"${k.id===UJG.kelasId?' selected':''}>${esc(k.NamaKelas)}</option>`).join('')}</select></label></div>` : ''}
+      <div id="ujGuruIsi" style="margin-top:8px"></div>
+    </div>`;
+  const gambarBawah = async ()=>{
+    const kid = UJG.kelasId;
+    const judul = el('ujGuruJudul'); const wadah = el('ujGuruIsi');
+    if(!kid){ judul.textContent = UJ_TAB==='lisan' ? '🎤 Jadwal Ujian Lisan' : '📝 Jadwal UTS/UAS'; wadah.innerHTML = '<p class="kecil">Belum ada kelas — dikelola oleh Operator.</p>'; return; }
+    if(UJ_TAB==='lisan'){
+      const s = await ambilAtauKosong(doc(db,'ujian_lisan','LIS_'+kid));
+      const lb = (((s && s.Baris) || []).slice()).sort((a,b)=>(a.Tanggal||'').localeCompare(b.Tanggal||'')||(Number(a.Meja)||0)-(Number(b.Meja)||0));
+      judul.textContent = '🎤 Jadwal Ujian Lisan — semua kelas';
+      wadah.innerHTML = lb.length ? `<div class="geserX"><table class="tabelMini"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu (WIB)</th><th>Pos / Meja</th><th>Materi Ujian</th><th>Nama Penguji</th><th>Ruangan</th></tr>
+        ${lb.map((b,i)=>`<tr><td>${b.No||i+1}</td><td>${esc(lisTeks(b.Tanggal))}</td><td>${esc(lisWaktu(b))}</td><td>Meja ${esc(b.Meja||'')}</td><td><b>${esc(b.Materi||'')}</b></td><td>${esc(b.PengujiNama||namaGuru(b.PengujiEmail)||'')}</td><td>${esc(b.Ruangan||'')}</td></tr>`).join('')}</table></div>`
+        : '<p class="kecil">Belum ada jadwal ujian lisan untuk kelas ini.</p>';
+    } else {
+      const s = await getDocs(query(collection(db,'jadwal_ujian'), where('KelasId','==',kid), where('Status','==','terbit')));
+      const uj = s.docs.map(d=>d.data()).sort((a,b)=>(a.Tanggal||'').localeCompare(b.Tanggal||'')||(a.JamMulai||'').localeCompare(b.JamMulai||''));
+      judul.textContent = '📝 Jadwal UTS/UAS — semua kelas';
+      wadah.innerHTML = uj.length ? `<div class="geserX"><table class="tabelMini"><tr><th>Jenis</th><th>Tanggal</th><th>Waktu</th><th>Mata Pelajaran</th><th>Pengawas</th></tr>
+        ${uj.map(u=>{
+          const t = u.Tanggal ? new Date(u.Tanggal+'T00:00:00') : null;
+          const tglStr = t ? t.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) : '';
+          return `<tr><td>${esc(u.Jenis||'')}</td><td>${esc(tglStr)}</td><td>${esc(u.JamMulai||'')}–${esc(u.JamSelesai||'')}</td><td><b style="color:${u.Warna||'inherit'}">${esc(u.NamaMapel||'')}</b></td><td>${esc(u.PengawasNama||'')}</td></tr>`;
+        }).join('')}</table></div>`
+        : '<p class="kecil">Belum ada jadwal UTS/UAS yang diterbitkan untuk kelas ini.</p>';
+    }
+  };
+  const selK = el('ujGuruKelas'); if(selK) selK.onchange = e=>{ UJG.kelasId = e.target.value; gambarBawah(); };
+  await gambarBawah();
+}
 async function modLisan(m){
   const isi = el('isi');
-  const mMenu = (m==='lisan' && AKUN.Peran==='operator') ? 'ujian' : m;
+  const mMenu = AKUN.Peran==='operator' ? 'ujian' : m;
   document.querySelectorAll('#menu .menuBtn').forEach(b=>b.classList.toggle('aktif', b.dataset.modul===mMenu));
-  if(m==='lisanSaya'){
-    const s = await getDocs(query(collection(db,'ujian_lisan'), where('SekolahId','==',AKUN.SekolahId)));
-    const tugas = [];
-    s.docs.forEach(d=>{ const data = d.data(); (data.Baris||[]).forEach(b=>{ if(b.PengujiEmail===AKUN.Email) tugas.push({kelas:data.NamaKelas||'', ...b}); }); });
-    tugas.sort((a,b)=> (a.Tanggal||'').localeCompare(b.Tanggal||'') || (Number(a.Meja)||0)-(Number(b.Meja)||0));
-    isi.innerHTML = `<h1 class="judul">🎤 Ujian Lisan</h1>
-      <div class="kartu"><h3>🧑‍🏫 Jadwal Saya sebagai Penguji</h3>
-      ${tugas.length ? `<div class="geserX"><table class="tabelMini" style="min-width:780px"><tr><th>No</th><th>Hari, Tanggal</th><th>Waktu (WIB)</th><th>Pos / Meja</th><th>Materi Ujian</th><th>Kelas</th><th>Ruangan</th></tr>
-        ${tugas.map((b,i)=>`<tr><td>${i+1}</td><td>${esc(lisTeks(b.Tanggal))}</td><td>${esc(lisWaktu(b))}</td><td>Meja ${esc(b.Meja||'')}</td><td><b>${esc(b.Materi||'')}</b></td><td>${esc(b.kelas)}</td><td>${esc(b.Ruangan||'')}</td></tr>`).join('')}</table></div>`
-        : '<p class="kecil">Belum ada tugas penguji ujian lisan untuk Anda.</p>'}
-      </div>`;
-    return;
-  }
   const daftarKelas = await ambilKelas();
   const bisaEdit = AKUN.Peran==='operator';
   try{
