@@ -175,7 +175,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #chatKepala .ujTab{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:12px}
 #chatKepala .ujTab.on{background:linear-gradient(135deg,#F59E0B,#EC4899);font-weight:700}
 #chatIsi{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
-.chatMsg{max-width:86%;width:fit-content;border-radius:12px;padding:7px 10px;font-size:13.5px;background:#0F172A;border:1px solid var(--garis);align-self:flex-start;white-space:pre-wrap;word-break:break-word}
+.chatMsg{max-width:86%;width:fit-content;border-radius:12px;padding:7px 10px;font-size:13.5px;background:#0F172A;border:1px solid var(--garis);align-self:flex-start}
+.chatTeks{white-space:pre-wrap;word-break:break-word}
 .chatMsg.aku{align-self:flex-end;background:linear-gradient(135deg,#065F46,#0F766E);border-color:transparent}
 .chatMsg.keputusan{background:linear-gradient(135deg,#713F12,#EAB308);color:#1C1917;border-color:transparent}
 .chatFoto{width:100%;max-width:240px;border-radius:8px;display:block;margin:4px 0;cursor:zoom-in}
@@ -1077,15 +1078,7 @@ function chatGambar(){
       const aku = m.PengirimEmail===AKUN.Email;
       const pin = m.Tipe==='keputusan';
       const t = m.DibuatPada?.seconds ? new Date(m.DibuatPada.seconds*1000).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '';
-      return `<div class="chatMsg${aku?' aku':''}${pin?' keputusan':''}" data-chatid="${esc(m.id)}">
-        ${pin?'📌 <b>KEPUTUSAN</b><br>':''}
-        ${!aku?`<b>${esc(m.PengirimNama||'')}</b> <span class="kecil">${labelPeran(m.Peran)}</span><br>`:''}
-        ${m.Foto?`<img src="${esc(m.Foto)}" class="chatFoto" data-chatfoto="${esc(m.id)}" alt="bukti">`:''}
-        ${m.Audio?`<div class="chatAudio">🎤 <audio controls preload="metadata" src="${esc(m.Audio)}"></audio></div>`:''}
-        ${m.Isi&&!m.Meet?esc(m.Isi):''}
-        ${m.Meet?`<div style="margin:4px 0"><a href="${esc(m.Meet)}" target="_blank" rel="noopener" style="font-weight:700;color:inherit;text-decoration:underline">🔗 ${esc(m.Isi||'Rapat Google Meet')}</a><div class="kecil" style="opacity:.75">klik untuk bergabung — dibuka di tab baru</div></div>`:''}
-        <div class="kecil" style="margin-top:2px;opacity:.75">${t}${bisaPin?` · <button type="button" class="btnTeks" data-chatpin="${esc(m.id)}">${pin?'batal keputusan':'📌 jadikan keputusan'}</button>`:''}</div>
-      </div>`;
+      return `<div class="chatMsg${aku?' aku':''}${pin?' keputusan':''}" data-chatid="${esc(m.id)}">${pin?'📌 <b>KEPUTUSAN</b><br>':''}${!aku?`<b>${esc(m.PengirimNama||'')}</b> <span class="kecil">${labelPeran(m.Peran)}</span><br>`:''}${m.Foto?`<img src="${esc(m.Foto)}" class="chatFoto" data-chatfoto="${esc(m.id)}" alt="bukti">`:''}${m.Audio?`<div class="chatAudio">🎤 <audio controls preload="metadata" src="${esc(m.Audio)}"></audio></div>`:''}${m.Isi&&!m.Meet?`<span class="chatTeks">${esc(m.Isi)}</span>`:''}${m.Meet?`<div style="margin:4px 0"><a href="${esc(m.Meet)}" target="_blank" rel="noopener" style="font-weight:700;color:inherit;text-decoration:underline">🔗 ${esc(m.Isi||'Rapat Google Meet')}</a><div class="kecil" style="opacity:.75">klik untuk bergabung — dibuka di tab baru</div></div>`:''}<div class="kecil" style="margin-top:2px;opacity:.75">${t}${bisaPin?` · <button type="button" class="btnTeks" data-chatpin="${esc(m.id)}" title="${pin?'Batalkan tanda keputusan':'Jadikan keputusan'}">${pin?'✖️ batal':'📌'}</button>`:''}</div></div>`;
     }).join('') || '<p class="kecil" style="margin:4px 2px">Belum ada pesan. Mulailah musyawarah — pesan muncul langsung tanpa muat ulang.</p>';
   }
   el('chatIsi').innerHTML = dalam;
