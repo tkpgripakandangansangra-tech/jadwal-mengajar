@@ -4200,7 +4200,7 @@ async function modBuatSoal(isi){
         <button type="button" id="bsSusunUlang" class="btn kecil">🔄 Susun dari Soal</button>
         <button type="button" id="bsSimpanLembar" class="btn utama kecil">💾 Simpan Lembar</button>
       </div>
-      <p class="kecil" style="margin-bottom:10px">Lembar ini bisa diedit 100%: klik lalu ketik untuk mengubah teks apa pun. Klik sebuah gambar untuk memunculkan alat kecil (perkecil, perbesar, putar, hitam-putih, hapus). Logo mengambang — bebas diseret tanpa mengganggu teks. Klik 🖼️ untuk menyisipkan gambar di posisi kursor terakhir, 🏫 untuk menambah logo. Jangan lupa 💾 Simpan Lembar.</p>
+      <p class="kecil" style="margin-bottom:10px">Lembar ini bisa diedit 100%: klik lalu ketik untuk mengubah teks apa pun. Seret gambar/logo ke mana saja — otomatis menjadi mengambang dan teks tidak terganggu. Klik gambar untuk alat kecil (perkecil, perbesar, putar, hitam-putih, hapus). Klik 🖼️ untuk menyisipkan gambar di posisi kursor terakhir, 🏫 untuk menambah logo. Jangan lupa 💾 Simpan Lembar.</p>
       <div id="bsEditor" class="bsKertas serif" contenteditable="true"></div>
       <div id="bsImgTool" hidden style="position:fixed;z-index:200;background:#1E293B;border:1px solid #475569;border-radius:10px;padding:6px;display:flex;gap:4px;align-items:center;box-shadow:var(--bayang)">
         <button type="button" class="btn kecil" data-bsgbr="-" title="Perkecil">➖</button>
@@ -4348,12 +4348,31 @@ async function modBuatSoal(isi){
     e.target.value='';
   };
   el('bsEditor').onmousedown = e=>{
-    const img = e.target.closest('img.bsLogo'); if(!img) return;
+    const img = e.target.closest('img'); if(!img) return;
     e.preventDefault();
     const ed = el('bsEditor');
-    const rEd = ed.getBoundingClientRect(), rImg = img.getBoundingClientRect();
-    const awalX = e.clientX, awalY = e.clientY, awalL = rImg.left - rEd.left, awalT = rImg.top - rEd.top;
+    const rEd = ed.getBoundingClientRect();
+    const awalX = e.clientX, awalY = e.clientY;
+    let melayang = (getComputedStyle(img).position === 'absolute');
+    let awalL = 0, awalT = 0;
+    const mulaiSeret = ()=>{
+      const rImg = img.getBoundingClientRect();
+      awalL = rImg.left - rEd.left; awalT = rImg.top - rEd.top;
+      if(!melayang){
+        img.style.width = Math.round(rImg.width) + 'px';
+        img.style.height = 'auto';
+        img.style.maxWidth = 'none';
+        img.style.left = awalL + 'px'; img.style.top = awalT + 'px';
+        img.style.position = 'absolute';
+        ed.appendChild(img);
+        melayang = true;
+      }
+    };
     const gerak = ev=>{
+      if(!melayang){
+        if(Math.abs(ev.clientX-awalX)<5 && Math.abs(ev.clientY-awalY)<5) return;
+        mulaiSeret();
+      }
       img.style.left = (awalL + ev.clientX - awalX) + 'px';
       img.style.top = (awalT + ev.clientY - awalY) + 'px';
       BS.lembarKotor = true;
@@ -4362,6 +4381,7 @@ async function modBuatSoal(isi){
     document.addEventListener('mousemove', gerak);
     document.addEventListener('mouseup', lepas);
   };
+  el('bsEditor').addEventListener('dragstart', e=>{ if(e.target.closest && e.target.closest('img')) e.preventDefault(); });
   el('bsEditor').onclick = e=>{
     const img = e.target.closest('img');
     const p = el('bsImgTool');
