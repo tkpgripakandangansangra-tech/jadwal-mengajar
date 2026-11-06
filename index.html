@@ -264,6 +264,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .bsTab.on{background:linear-gradient(135deg,#4338CA,#8B5CF6);border-color:transparent;color:#fff}
 .bsOpsiGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .bsKertas{background:#FBFAF6;color:#111827;border-radius:12px;padding:22px;box-shadow:var(--bayang)}
+.bsKertas[contenteditable]:focus{outline:2px dashed rgba(134,97,249,.45);outline-offset:4px}
+.bsKertas img{cursor:move}
 .bsKertas .serif{font-family:'Times New Roman',serif}
 /* ---- gerbang & profil guru ---- */
 #gerbangBio{position:fixed;inset:0;z-index:200;background:var(--latar);overflow-y:auto;padding:18px 14px}
@@ -4121,7 +4123,7 @@ function brStatAwal(){
 }
 
 /* ---------- buat soal ujian (guru) ---------- */
-let BS = {kelasId:'', mapel:'', jenis:'UTS', bagian:'A', soal:[], instruksi:{}, gambar:'', gUrl:'', gPos:'sesudah', gLebar:230, gPutar:0, gHitam:false, dikumpulkan:false};
+let BS = {kelasId:'', mapel:'', jenis:'UTS', bagian:'A', soal:[], instruksi:{}, gambar:'', gUrl:'', lembarKotor:false, dikumpulkan:false};
 const BS_INSTR = {
   A:'Berilah tanda silang (X) pada huruf a, b, c, atau d di depan jawaban yang paling benar!',
   B:'Jawablah pertanyaan-pertanyaan berikut dengan benar!',
@@ -4139,11 +4141,13 @@ async function bsMuat(){
   }catch(_){ BS.soal = []; BS.instruksi = Object.assign({}, BS_INSTR); BS.dikumpulkan = false; }
 }
 async function bsSimpanDok(namaKelas){
+  const ed = el('bsEditor');
+  const lembar = ed ? ed.innerHTML : ((BS.dok && BS.dok.Lembar) || '');
   await setDoc(doc(db,'soal_ujian', bsIdDoc()), {
     SekolahId:AKUN.SekolahId, GuruEmail:AKUN.Email, GuruNama:AKUN.NamaPengguna||namaGuru(AKUN.Email)||'',
     KelasId:BS.kelasId, NamaKelas:namaKelas||'', Mapel:BS.mapel, Jenis:BS.jenis,
     Semester: BS.jenis==='UTS'?'Ganjil':'Genap', TahunAjaran:SEKOLAH.TahunAjaran||taDefault(),
-    Instruksi:BS.instruksi, Soal:BS.soal, Dikumpulkan:BS.dikumpulkan, DiperbaruiPada:serverTimestamp()
+    Instruksi:BS.instruksi, Soal:BS.soal, Lembar:lembar, Dikumpulkan:BS.dikumpulkan, DiperbaruiPada:serverTimestamp()
   }, {merge:true});
 }
 async function modBuatSoal(isi){
@@ -4178,20 +4182,22 @@ async function modBuatSoal(isi){
         <input id="bsUrl" placeholder="atau tempel tautan gambar https://…" style="flex:1;min-width:190px;max-width:340px;text-transform:none">
         <span id="bsGambarPrev" class="barisAtas" style="margin:0;gap:6px"></span>
       </div>
-      <div class="barisAtas" style="margin-bottom:6px">
-        <label style="margin:0">Letak <select id="bsPos"><option value="sesudah">Setelah soal</option><option value="sebelum">Sebelum soal</option></select></label>
-        <label style="margin:0">Lebar <input type="number" id="bsLebar" value="230" min="60" max="600" style="width:86px"> px</label>
-        <label style="margin:0">Putar <select id="bsPutar"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
-        <label class="kecil" style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="bsHitam" style="width:auto"> hitam-putih</label>
-      </div>
       <div id="bsOpsi"></div>
       <div class="barisTombol">
         <button type="button" id="bsSimpanSoal" class="btn utama">➕ Simpan Soal</button>
         <span class="kecil" style="align-self:center">Tersimpan: <b id="bsJumlah">0</b> soal — setelah disimpan, langsung ketik soal berikutnya.</span>
       </div>
+      <div id="bsDaftar" style="margin-top:8px"></div>
     </div>
-    <div class="kartu"><h3>👁️ Preview Lembar Soal</h3>
-      <div id="bsPreview"></div>
+    <div class="kartu"><h3>📄 Lembar Soal — bebas diedit</h3>
+      <div class="barisAtas" style="margin-bottom:8px">
+        <button type="button" id="bsSisipGbr" class="btn kecil">🖼️ Sisipkan Gambar</button>
+        <input type="file" id="bsFileEditor" accept="image/png,image/jpeg" hidden>
+        <button type="button" id="bsSusunUlang" class="btn kecil">🔄 Susun dari Soal</button>
+        <button type="button" id="bsSimpanLembar" class="btn utama kecil">💾 Simpan Lembar</button>
+      </div>
+      <p class="kecil" style="margin-bottom:10px">Lembar ini bisa diedit 100% sesuai kebijakan sekolah: klik lalu ketik untuk mengubah teks apa pun (kop, perintah, soal, tambah, hapus). Gambar bisa diseret ke mana saja dan ukurannya bisa diubah. Klik 🖼️ untuk menyisipkan gambar di posisi kursor. Jangan lupa 💾 Simpan Lembar.</p>
+      <div id="bsEditor" class="bsKertas serif" contenteditable="true"></div>
       <div class="barisTombol">
         <button type="button" id="bsKumpul" class="btn utama">📨 Kumpulkan ke KS &amp; Operator</button>
         <span class="kecil" id="bsStatus" style="align-self:center"></span>
@@ -4210,28 +4216,19 @@ async function modBuatSoal(isi){
   };
   const gambarGmb = ()=>{
     const g = BS.gambar || BS.gUrl || '';
-    el('bsGambarPrev').innerHTML = g ? `<img src="${esc(g)}" style="width:54px;height:54px;object-fit:cover;border-radius:6px;transform:rotate(${BS.gPutar}deg);${BS.gHitam?'filter:grayscale(1)':''}"><button type="button" id="bsGmbHapus" class="btnIkon" title="Buang gambar">✖</button>` : '';
+    el('bsGambarPrev').innerHTML = g ? `<img src="${esc(g)}" style="width:54px;height:54px;object-fit:cover;border-radius:6px"><button type="button" id="bsGmbHapus" class="btnIkon" title="Buang gambar">✖</button>` : '';
     const hb = el('bsGmbHapus'); if(hb) hb.onclick = ()=>{ BS.gambar=''; BS.gUrl=''; gambarGmb(); };
   };
-  const gambarPreview = ()=>{
-    el('bsJumlah').textContent = BS.soal.length;
-    el('bsStatus').textContent = BS.dikumpulkan ? '✅ Sudah dikumpulkan ke KS & Operator' : 'Belum dikumpulkan';
+  const kertasDariSoal = ()=>{
     const bagianAda = ['A','B','C','D'].filter(b=>BS.soal.some(s=>s.Bagian===b));
-    const gbrHtml = (s)=>{
-      const src = s.Gambar || s.GbrUrl || '';
-      if(!src) return '';
-      return `<img src="${esc(src)}" style="width:${Math.max(60,Math.min(600,Number(s.GbrLebar)||230))}px;transform:rotate(${Number(s.GbrPutar)||0}deg);${s.GbrHitam?'filter:grayscale(1);':''}border:1px solid #9CA3AF;margin-top:4px">`;
-    };
-    const soalHtml = x => x.s.GbrPos==='sebelum' ? gbrHtml(x.s)+`<span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>` : `<span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>`+gbrHtml(x.s);
-    el('bsPreview').innerHTML = `<div class="bsKertas">
-      <div class="serif" style="text-align:center;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:12px">
+    return `<div style="text-align:center;border-bottom:3px double #111;padding-bottom:10px;margin-bottom:12px">
         ${SEKOLAH.LogoSekolah?`<img src="${esc(SEKOLAH.LogoSekolah)}" style="width:72px;height:72px;object-fit:cover;border-radius:50%;margin-bottom:6px"><br>`:''}
         <div style="font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase">${esc(SEKOLAH.NamaSekolah||'Nama Sekolah')}</div>
         <div style="font-size:12px;text-transform:uppercase">${esc(SEKOLAH.AlamatSekolah||'Alamat Sekolah')}</div>
         <div style="font-size:12px">TAHUN AJARAN ${esc(SEKOLAH.TahunAjaran||taDefault())}</div>
       </div>
-      <div class="serif" style="text-align:center;font-weight:700;font-size:15px;margin-bottom:10px">${BS.jenis==='UTS'?'ULANGAN TENGAH SEMESTER':'ULANGAN AKHIR SEMESTER'} — SEMESTER ${BS.jenis==='UTS'?'GANJIL':'GENAP'}</div>
-      <table class="serif" style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">
+      <div style="text-align:center;font-weight:700;font-size:15px;margin-bottom:10px">${BS.jenis==='UTS'?'ULANGAN TENGAH SEMESTER':'ULANGAN AKHIR SEMESTER'} — SEMESTER ${BS.jenis==='UTS'?'GANJIL':'GENAP'}</div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">
         <tr style="border-top:1.5px solid #111;border-bottom:1px solid #111">
           <td style="padding:4px 6px">Mata Pelajaran : <b>${esc(BS.mapel||'—')}</b></td>
           <td style="padding:4px 6px">Kelas : <b>${esc(namaKelas())}</b></td>
@@ -4246,24 +4243,33 @@ async function modBuatSoal(isi){
       ${BS.soal.length ? bagianAda.map(b=>{
         const daftar = BS.soal.map((s,i)=>({s,i})).filter(x=>x.s.Bagian===b);
         const jawabC = b==='C' ? daftar.map((x,n)=>({h:String.fromCharCode(97+n), t:x.s.Jawaban})).filter(x=>x.t) : [];
-        return `<div class="serif" style="margin-top:12px;text-align:left;font-size:14px">
+        return `<div style="margin-top:12px;text-align:left;font-size:14px">
           <b>${b}. ${esc(BS.instruksi[b]||BS_INSTR[b]||'')}</b>
-          ${daftar.map((x,n)=>`<div style="display:flex;gap:8px;margin-top:8px;align-items:flex-start">
-            <span style="flex-shrink:0">${n+1}.</span>
-            <span style="flex:1">${soalHtml(x)}
-            ${x.s.Opsi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-top:4px;font-size:13px">${['A','B','C','D'].map(h=>`<span>${h.toLowerCase()}. ${esc(x.s.Opsi[h]||'…')}</span>`).join('')}</div>`:''}</span>
-            <button type="button" class="btnIkon" data-bsdel="${x.i}" title="Hapus soal ini" style="color:#DC2626;flex-shrink:0">🗑</button>
-          </div>`).join('')}
+          ${daftar.map((x,n)=>{
+            const gbr = (x.s.Gambar || x.s.GbrUrl) ? `<img src="${esc(x.s.Gambar||x.s.GbrUrl)}" style="max-width:230px;border:1px solid #9CA3AF;margin-top:4px">` : '';
+            return `<div style="margin-top:8px">${n+1}. <span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>${gbr}
+            ${x.s.Opsi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-top:4px;font-size:13px">${['A','B','C','D'].map(h=>`<span>${h.toLowerCase()}. ${esc(x.s.Opsi[h]||'…')}</span>`).join('')}</div>`:''}</div>`;
+          }).join('')}
           ${jawabC.length?`<div style="margin-top:10px;border-top:1px dashed #555;padding-top:6px"><b>Jawaban :</b>${jawabC.map(x=>`<span style="display:block;margin-top:3px">${x.h}. ${esc(x.t)}</span>`).join('')}</div>`:''}
         </div>`;
-      }).join('') : '<p class="serif" style="text-align:center;color:#6B7280;margin-top:14px">Belum ada soal — soal yang Anda simpan tampil di sini.</p>'}
-    </div>`;
+      }).join('') : '<p style="text-align:center;color:#6B7280;margin-top:14px">Belum ada soal — soal yang Anda simpan tampil di sini, dan lembar ini bebas Anda ubah.</p>'}`;
+  };
+  const muatEditor = ()=>{
+    el('bsEditor').innerHTML = (BS.dok && BS.dok.Lembar) ? BS.dok.Lembar : kertasDariSoal();
+    BS.lembarKotor = false;
+  };
+  const perbaruiRingkas = ()=>{
+    el('bsJumlah').textContent = BS.soal.length;
+    el('bsStatus').textContent = BS.dikumpulkan ? '✅ Sudah dikumpulkan ke KS & Operator' : 'Belum dikumpulkan';
+    el('bsDaftar').innerHTML = BS.soal.length
+      ? '<p class="kecil" style="font-weight:700;margin-bottom:4px">Daftar soal tersimpan:</p>' + BS.soal.map((s,i)=>`<p class="kecil" style="display:flex;gap:8px;align-items:center;margin:2px 0"><span style="flex:1">${s.Bagian}. ${i+1} — ${esc(String(s.Teks).slice(0,60))}${String(s.Teks).length>60?'…':''}</span><button type="button" class="btnIkon" data-bsdel="${i}" title="Hapus soal ini dari daftar" style="color:#F87171">🗑</button></p>`).join('')
+      : '';
   };
   const aturSemua = ()=>{
     el('bsSemester').textContent = BS.jenis==='UTS'?'Ganjil':'Genap';
     el('bsInstr').value = BS.instruksi[BS.bagian] || BS_INSTR[BS.bagian] || '';
-    el('bsPos').value = BS.gPos; el('bsLebar').value = BS.gLebar; el('bsPutar').value = String(BS.gPutar); el('bsHitam').checked = BS.gHitam; el('bsUrl').value = BS.gUrl;
-    gambarTabs(); gambarOpsi(); gambarGmb(); gambarPreview();
+    el('bsUrl').value = BS.gUrl;
+    gambarTabs(); gambarOpsi(); gambarGmb(); perbaruiRingkas();
   };
   el('bsTabs').onclick = e=>{
     const t = e.target.closest('[data-bsb]'); if(!t) return;
@@ -4278,13 +4284,43 @@ async function modBuatSoal(isi){
     e.target.value='';
   };
   el('bsUrl').onchange = e=>{ BS.gUrl = e.target.value.trim(); BS.gambar = ''; gambarGmb(); };
-  el('bsPos').onchange = e=>{ BS.gPos = e.target.value; };
-  el('bsLebar').onchange = e=>{ BS.gLebar = Math.max(60, Math.min(600, Number(e.target.value)||230)); gambarGmb(); };
-  el('bsPutar').onchange = e=>{ BS.gPutar = Number(e.target.value)||0; gambarGmb(); };
-  el('bsHitam').onchange = e=>{ BS.gHitam = e.target.checked; gambarGmb(); };
-  el('bsKelas').onchange = async e=>{ BS.kelasId = e.target.value; await bsMuat(); aturSemua(); };
-  el('bsMapel').onchange = async e=>{ BS.mapel = e.target.value; await bsMuat(); aturSemua(); };
-  el('bsJenis').onchange = async e=>{ BS.jenis = e.target.value; await bsMuat(); aturSemua(); };
+  el('bsEditor').oninput = ()=>{ BS.lembarKotor = true; };
+  el('bsSisipGbr').onclick = ()=>{ el('bsFileEditor').click(); };
+  el('bsFileEditor').onchange = async e=>{
+    const file = e.target.files[0]; if(!file) return;
+    try{
+      const url = await gbKompresFoto(file, 900, .55);
+      const ed = el('bsEditor');
+      const img = document.createElement('img');
+      img.src = url; img.style.maxWidth = '230px';
+      const sel = window.getSelection();
+      if(sel && sel.rangeCount && ed.contains(sel.anchorNode)){
+        const r = sel.getRangeAt(0); r.collapse(false); r.insertNode(img);
+      } else { ed.appendChild(img); }
+      BS.lembarKotor = true;
+      toast('🖼️ Gambar disisipkan — seret untuk memindahkan, tarik ujungnya untuk mengubah ukuran');
+    }catch(_){ toast('⛔ Gambar gagal diproses.'); }
+    e.target.value='';
+  };
+  el('bsSusunUlang').onclick = async ()=>{
+    const lanjut = await konfirmasi('Susun ulang lembar dari daftar soal? Perubahan manual pada lembar akan hilang — simpan dulu (💾) bila masih perlu.');
+    if(!lanjut) return;
+    el('bsEditor').innerHTML = kertasDariSoal();
+    BS.lembarKotor = false;
+    toast('🔄 Lembar disusun ulang dari daftar soal');
+  };
+  el('bsSimpanLembar').onclick = async ()=>{
+    const b = el('bsSimpanLembar'); b.disabled = true;
+    try{
+      await bsSimpanDok(namaKelas());
+      BS.lembarKotor = false;
+      toast('💾 Lembar soal tersimpan');
+    }catch(err){ toast('⛔ '+teksErr(err)); }
+    b.disabled = false;
+  };
+  el('bsKelas').onchange = async e=>{ BS.kelasId = e.target.value; await bsMuat(); aturSemua(); muatEditor(); };
+  el('bsMapel').onchange = async e=>{ BS.mapel = e.target.value; await bsMuat(); aturSemua(); muatEditor(); };
+  el('bsJenis').onchange = async e=>{ BS.jenis = e.target.value; await bsMuat(); aturSemua(); muatEditor(); };
   el('bsSimpanSoal').onclick = async ()=>{
     const teks = el('bsTeks').value.trim();
     if(!teks){ toast('⚠️ Tulis dulu soalnya.'); return; }
@@ -4296,28 +4332,33 @@ async function modBuatSoal(isi){
     const jawabC = BS.bagian==='C' ? String(el('bsJawabC').value||'').trim() : '';
     if(BS.bagian==='C' && !jawabC){ toast('⚠️ GAYA C mencocokkan — tulis jawaban soal ini (masuk daftar jawaban).'); return; }
     BS.instruksi[BS.bagian] = el('bsInstr').value.trim() || BS_INSTR[BS.bagian];
-    BS.soal.push({Bagian:BS.bagian, Teks:teks, Gambar:BS.gambar||'', GbrUrl:BS.gUrl||'', GbrPos:BS.gPos, GbrLebar:BS.gLebar, GbrPutar:BS.gPutar, GbrHitam:BS.gHitam, Opsi:BS.bagian==='A'?opsi:null, Jawaban:jawabC||''});
+    BS.soal.push({Bagian:BS.bagian, Teks:teks, Gambar:BS.gambar||'', GbrUrl:BS.gUrl||'', Opsi:BS.bagian==='A'?opsi:null, Jawaban:jawabC||''});
     const b = el('bsSimpanSoal'); b.disabled = true; b.textContent = '⏳ MENYIMPAN…';
     try{
+      if(!BS.lembarKotor) el('bsEditor').innerHTML = kertasDariSoal();
       await bsSimpanDok(namaKelas());
       el('bsTeks').value = '';
       if(BS.bagian==='A') ['A','B','C','D'].forEach(h=>{ el('bsOpsi'+h).value = ''; });
       if(BS.bagian==='C'){ const jc = el('bsJawabC'); if(jc) jc.value = ''; }
       BS.gambar = ''; BS.gUrl = '';
-      toast('✅ Soal tersimpan (total '+BS.soal.length+') — silakan ketik soal berikutnya');
+      toast('✅ Soal tersimpan (total '+BS.soal.length+') — silakan ketik soal berikutnya'+(BS.lembarKotor?' — lembar tidak diubah, klik 🔄 Susun dari Soal bila ingin susun ulang':''));
       aturSemua();
     }catch(err){ BS.soal.pop(); toast('⛔ '+teksErr(err)+' — soal belum tersimpan, silakan ulangi.'); }
     finally{ b.disabled = false; b.textContent = '➕ Simpan Soal'; }
   };
-  el('bsPreview').onclick = async e=>{
+  el('bsDaftar').onclick = async e=>{
     const d = e.target.closest('[data-bsdel]'); if(!d) return;
     const i = Number(d.dataset.bsdel);
     const s = BS.soal[i]; if(!s) return;
-    const lanjut = await konfirmasi('Hapus soal ini dari '+namaKelas()+'?'+(s.Teks?' ("'+String(s.Teks).slice(0,40)+(s.Teks.length>40?'…':'')+'")':''));
+    const lanjut = await konfirmasi('Hapus soal ini dari daftar? ("'+String(s.Teks).slice(0,40)+(String(s.Teks).length>40?'…':'')+'")');
     if(!lanjut) return;
     BS.soal.splice(i,1);
-    try{ await bsSimpanDok(namaKelas()); toast('🗑 Soal dihapus'); aturSemua(); }
-    catch(err){ toast('⛔ '+teksErr(err)); }
+    try{
+      if(!BS.lembarKotor) el('bsEditor').innerHTML = kertasDariSoal();
+      await bsSimpanDok(namaKelas());
+      toast('🗑 Soal dihapus dari daftar');
+      aturSemua();
+    }catch(err){ toast('⛔ '+teksErr(err)); }
   };
   el('bsKumpul').onclick = async ()=>{
     if(!BS.soal.length){ toast('⚠️ Belum ada soal untuk dikumpulkan.'); return; }
@@ -4338,6 +4379,7 @@ async function modBuatSoal(isi){
     finally{ b.disabled = false; b.textContent = '📨 Kumpulkan ke KS & Operator'; }
   };
   aturSemua();
+  muatEditor();
 }
 
 /* ---------- reset ---------- */
