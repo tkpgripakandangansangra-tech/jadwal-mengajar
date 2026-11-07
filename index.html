@@ -2129,7 +2129,7 @@ async function modPengaturan(isi){
       <button id="btnKsKosong" class="btn bahaya" style="margin-top:6px">🗑 Kosongkan Kursi KS</button>
     </div>
     <div class="kartu" style="max-width:560px"><h3>♻️ Zona Reset</h3>
-      <p class="kecil">🔄 <b>Reset Tahunan</b> — hapus semua jadwal, usulan, notifikasi &amp; akun guru nonaktif (mutasi). Guru aktif, kelas, mapel &amp; pengaturan waktu tetap utuh.</p>
+      <p class="kecil">🔄 <b>Reset Tahunan</b> — hapus semua jadwal, usulan, notifikasi &amp; akun guru nonaktif (mutasi). Guru aktif, kelas, mapel &amp; pengaturan waktu tetap utuh. <b>Soal ujian &amp; arsip bukti permanen — tidak ikut terhapus.</b></p>
       <button id="btnResetTahun" class="btn">🔄 Reset Tahunan</button>
       <p class="kecil" style="margin-top:12px">☣️ <b>Reset Seluruh Data</b> — factory reset: sekolah, akun, kelas, mapel, jadwal, kode pendaftaran, semuanya hilang dan Anda mendaftar ulang dari nol.</p>
       <button id="btnResetPabrik" class="btn bahaya">☣️ Reset Seluruh Data</button>
@@ -4631,10 +4631,10 @@ async function modSoalMasuk(isi){
 
 /* ---------- reset ---------- */
 async function resetTahunan(){
-  const lanjut = await konfirmasi('🔄 RESET TAHUNAN: menghapus SEMUA jadwal, usulan, notifikasi, dan akun guru nonaktif/mutasi. Guru aktif, kelas, mapel & pengaturan waktu TETAP utuh. Lanjutkan?');
+  const lanjut = await konfirmasi('🔄 RESET TAHUNAN: menghapus SEMUA jadwal, usulan, notifikasi, dan akun guru nonaktif/mutasi. Guru aktif, kelas, mapel & pengaturan waktu TETAP utuh. Soal ujian & arsip bukti TIDAK ikut terhapus. Lanjutkan?');
   if(!lanjut) return;
   const gagal = [];
-  for(const nama of ['jadwal','usulan','notifikasi','undangan','jadwal_ujian','pengajuan_ijin','chat_pesan','soal_ujian']){
+  for(const nama of ['jadwal','usulan','notifikasi','undangan','jadwal_ujian','pengajuan_ijin','chat_pesan']){
     try{
       const r = await hapusKoleksi(nama);
       if(r.gagal>0) gagal.push(nama);
