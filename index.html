@@ -4229,9 +4229,8 @@ async function modBuatSoal(isi){
       <div id="bsOpsi"></div>
       <div class="barisTombol">
         <button type="button" id="bsSimpanSoal" class="btn utama">➕ Simpan Soal</button>
-        <span class="kecil" style="align-self:center">Tersimpan: <b id="bsJumlah">0</b> soal — setelah disimpan, langsung ketik soal berikutnya.</span>
+        <span class="kecil" style="align-self:center">Tersimpan: <b id="bsJumlah">0</b> soal — untuk mengubah/menghapus soal, lakukan langsung di lembar soal di bawah.</span>
       </div>
-      <div id="bsDaftar" style="margin-top:8px"></div>
     </div>
     <div class="kartu"><h3>📄 Lembar Soal — bebas diedit</h3>
       <div class="barisAtas" style="margin-bottom:8px">
@@ -4333,9 +4332,6 @@ async function modBuatSoal(isi){
   const perbaruiRingkas = ()=>{
     el('bsJumlah').textContent = BS.soal.length;
     el('bsStatus').textContent = BS.dikumpulkan ? '✅ Sudah dikumpulkan ke KS & Operator' : 'Belum dikumpulkan';
-    el('bsDaftar').innerHTML = BS.soal.length
-      ? '<p class="kecil" style="font-weight:700;margin-bottom:4px">Daftar soal tersimpan:</p>' + BS.soal.map((s,i)=>`<p class="kecil" style="display:flex;gap:8px;align-items:center;margin:2px 0"><span style="flex:1">${s.Bagian}. ${i+1} — ${esc(ringkasTeks(s.Teks).slice(0,60))}${ringkasTeks(s.Teks).length>60?'…':''}</span><button type="button" class="btnIkon" data-bsdel="${i}" title="Hapus soal ini dari daftar" style="color:#F87171">🗑</button></p>`).join('')
-      : '';
   };
   const aturSemua = ()=>{
     el('bsSemester').textContent = BS.jenis==='UTS'?'Ganjil':'Genap';
@@ -4560,24 +4556,6 @@ async function modBuatSoal(isi){
       aturSemua();
     }catch(err){ BS.soal.pop(); toast('⛔ '+teksErr(err)+' — soal belum tersimpan, silakan ulangi.'); }
     finally{ b.disabled = false; b.textContent = '➕ Simpan Soal'; }
-  };
-  el('bsDaftar').onclick = async e=>{
-    const d = e.target.closest('[data-bsdel]'); if(!d) return;
-    const i = Number(d.dataset.bsdel);
-    const s = BS.soal[i]; if(!s) return;
-    const lanjut = await konfirmasi('Hapus soal ini dari daftar? ("'+ringkasTeks(s.Teks).slice(0,40)+(ringkasTeks(s.Teks).length>40?'…':'')+'")');
-    if(!lanjut) return;
-    BS.soal.splice(i,1);
-    if(BS.lembarKotor){
-      const blok = el('bsEditor').querySelector('.bsSoalBlok[data-isi="'+i+'"]'); if(blok) blok.remove();
-      el('bsEditor').querySelectorAll('[data-bshapus]').forEach(b=>{ const bi = Number(b.dataset.bshapus); if(bi>i) b.dataset.bshapus = String(bi-1); });
-      el('bsEditor').querySelectorAll('.bsSoalBlok[data-isi]').forEach(b=>{ const bi = Number(b.dataset.isi); if(bi>i) b.dataset.isi = String(bi-1); });
-    } else el('bsEditor').innerHTML = kertasDariSoal();
-    try{
-      await bsSimpanDok(namaKelas());
-      toast('🗑 Soal dihapus dari daftar');
-      aturSemua();
-    }catch(err){ toast('⛔ '+teksErr(err)); }
   };
   el('bsKumpul').onclick = async ()=>{
     if(!BS.soal.length){ toast('⚠️ Belum ada soal untuk dikumpulkan.'); return; }
