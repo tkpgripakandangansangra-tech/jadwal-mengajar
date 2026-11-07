@@ -244,6 +244,7 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body *{visibility:hidden}
+  .bsSoalHapus{display:none!important}
   #areaCetak,#areaCetak *{visibility:visible}
   #areaCetak{display:block;position:absolute;left:0;top:0;width:100%}
   @page{size:A4 landscape;margin:12mm}
@@ -266,6 +267,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .bsKertas{background:#FBFAF6;color:#111827;border-radius:12px;padding:22px;box-shadow:var(--bayang)}
 .bsKertas[contenteditable]:focus{outline:2px dashed rgba(134,97,249,.45);outline-offset:4px}
 .bsKertas img{cursor:move}
+.bsSoalHapus{background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;opacity:.45;padding:0 4px;vertical-align:middle}
+.bsSoalHapus:hover{opacity:1}
 #bsEditor{position:relative}
 img.bsLogo{position:absolute;width:72px;height:72px;object-fit:cover;border-radius:50%;cursor:move;z-index:5;background:#fff}
 .bsKertas .serif{font-family:'Times New Roman',serif}
@@ -4174,7 +4177,12 @@ async function bsMuat(){
 }
 async function bsSimpanDok(namaKelas){
   const ed = el('bsEditor');
-  const lembar = ed ? ed.innerHTML : ((BS.dok && BS.dok.Lembar) || '');
+  let lembar = ((BS.dok && BS.dok.Lembar) || '');
+  if(ed){
+    const kl = ed.cloneNode(true);
+    kl.querySelectorAll('[data-bshapus]').forEach(b=>b.remove());
+    lembar = kl.innerHTML;
+  }
   await setDoc(doc(db,'soal_ujian', bsIdDoc()), {
     SekolahId:AKUN.SekolahId, GuruEmail:AKUN.Email, GuruNama:AKUN.NamaPengguna||namaGuru(AKUN.Email)||'',
     KelasId:BS.kelasId, NamaKelas:namaKelas||'', Mapel:BS.mapel, Jenis:BS.jenis,
@@ -4208,10 +4216,10 @@ async function modBuatSoal(isi){
       <input id="bsInstr" style="margin-bottom:10px">
       <label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Soal — boleh sepanjang apa pun</label>
       <textarea id="bsTeks" rows="4" placeholder="Tulis pertanyaan di sini…" style="margin-bottom:10px"></textarea>
-      <label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Gambar soal (pilihan — unggah berkas atau tempel tautan gambar)</label>
+      <label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Gambar soal (pilihan — pilih berkas dari perangkat)</label>
       <div class="barisAtas" style="margin-bottom:6px">
-        <input type="file" id="bsFile" accept="image/png,image/jpeg" style="max-width:230px">
-        <input id="bsUrl" placeholder="atau tempel tautan gambar https://…" style="flex:1;min-width:190px;max-width:340px;text-transform:none">
+        <button type="button" id="bsPilihGbr" class="btn kecil">🖼️ + Gambar</button>
+        <input type="file" id="bsFile" accept="image/png,image/jpeg" hidden>
         <span id="bsGambarPrev" class="barisAtas" style="margin:0;gap:6px"></span>
       </div>
       <div id="bsOpsi"></div>
@@ -4230,7 +4238,7 @@ async function modBuatSoal(isi){
         <button type="button" id="bsSusunUlang" class="btn kecil">🔄 Susun dari Soal</button>
         <button type="button" id="bsSimpanLembar" class="btn utama kecil">💾 Simpan Lembar</button>
       </div>
-      <p class="kecil" style="margin-bottom:10px">Lembar ini bisa diedit 100%: klik lalu ketik untuk mengubah teks apa pun. Seret gambar/logo ke mana saja — otomatis menjadi mengambang dan teks tidak terganggu. Klik gambar untuk alat kecil (perkecil, perbesar, putar, hitam-putih, hapus). Klik 🖼️ untuk menyisipkan gambar di posisi kursor terakhir, 🏫 untuk menambah logo. Jangan lupa 💾 Simpan Lembar.</p>
+      <p class="kecil" style="margin-bottom:10px">Lembar ini bisa diedit 100%: klik lalu ketik untuk mengubah teks apa pun. Seret gambar/logo ke mana saja — otomatis menjadi mengambang dan teks tidak terganggu. Klik gambar untuk alat kecil (perkecil, perbesar, putar, hitam-putih, hapus). Klik 🖼️ untuk menyisipkan gambar di posisi kursor terakhir, 🏫 untuk menambah logo. Tombol 🗑 di sebelah tiap soal menghapus soal itu dari lembar (tidak ikut tercetak). Jangan lupa 💾 Simpan Lembar.</p>
       <div id="bsEditor" class="bsKertas serif" contenteditable="true"></div>
       <div id="bsImgTool" hidden style="position:fixed;z-index:200;background:#1E293B;border:1px solid #475569;border-radius:10px;padding:6px;display:flex;gap:4px;align-items:center;box-shadow:var(--bayang)">
         <button type="button" class="btn kecil" data-bsgbr="-" title="Perkecil">➖</button>
@@ -4296,16 +4304,26 @@ async function modBuatSoal(isi){
           <b>${b}. ${esc(BS.instruksi[b]||BS_INSTR[b]||'')}</b>
           ${daftar.map((x,n)=>{
             const gbr = (x.s.Gambar || x.s.GbrUrl) ? `<img src="${esc(x.s.Gambar||x.s.GbrUrl)}" style="max-width:230px;border:1px solid #9CA3AF;margin-top:4px">` : '';
-            return `<div style="margin-top:8px">${n+1}. <span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>${gbr}
+            return `<div class="bsSoalBlok" data-isi="${x.i}" style="margin-top:8px">${n+1}. <span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>${gbr}<button type="button" class="bsSoalHapus" data-bshapus="${x.i}" contenteditable="false" title="Hapus soal ini dari lembar">🗑</button>
             ${x.s.Opsi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-top:4px;font-size:13px">${['A','B','C','D'].map(h=>`<span>${h.toLowerCase()}. ${esc(x.s.Opsi[h]||'…')}</span>`).join('')}</div>`:''}</div>`;
           }).join('')}
           ${jawabC.length?`<div style="margin-top:10px;border-top:1px dashed #555;padding-top:6px"><b>Jawaban :</b>${jawabC.map(x=>`<span style="display:block;margin-top:3px">${x.h}. ${esc(x.t)}</span>`).join('')}</div>`:''}
         </div>`;
       }).join('') : '<p style="text-align:center;color:#6B7280;margin-top:14px">Belum ada soal — soal yang Anda simpan tampil di sini, dan lembar ini bebas Anda ubah.</p>'}`;
   };
+  const pasangTombolHapus = ()=>{
+    el('bsEditor').querySelectorAll('.bsSoalBlok[data-isi]').forEach(b=>{
+      if(b.querySelector('[data-bshapus]')) return;
+      const tb = document.createElement('button');
+      tb.type='button'; tb.className='bsSoalHapus'; tb.contentEditable=false; tb.title='Hapus soal ini dari lembar';
+      tb.dataset.bshapus = b.dataset.isi; tb.textContent='🗑';
+      b.appendChild(tb);
+    });
+  };
   const muatEditor = ()=>{
     el('bsEditor').innerHTML = (BS.dok && BS.dok.Lembar) ? BS.dok.Lembar : kertasDariSoal();
     BS.lembarKotor = false;
+    pasangTombolHapus();
   };
   const perbaruiRingkas = ()=>{
     el('bsJumlah').textContent = BS.soal.length;
@@ -4317,7 +4335,6 @@ async function modBuatSoal(isi){
   const aturSemua = ()=>{
     el('bsSemester').textContent = BS.jenis==='UTS'?'Ganjil':'Genap';
     el('bsInstr').value = BS.instruksi[BS.bagian] || BS_INSTR[BS.bagian] || '';
-    el('bsUrl').value = BS.gUrl;
     gambarTabs(); gambarOpsi(); gambarGmb(); perbaruiRingkas();
   };
   el('bsTabs').onclick = e=>{
@@ -4332,7 +4349,7 @@ async function modBuatSoal(isi){
     catch(_){ toast('⛔ Gambar gagal diproses.'); }
     e.target.value='';
   };
-  el('bsUrl').onchange = e=>{ BS.gUrl = e.target.value.trim(); BS.gambar = ''; gambarGmb(); };
+  el('bsPilihGbr').onclick = ()=>{ el('bsFile').click(); };
   el('bsEditor').oninput = ()=>{ BS.lembarKotor = true; };
   let bsKursor = null, bsImgAktif = null;
   const bsSimpanKursor = ()=>{
@@ -4412,7 +4429,22 @@ async function modBuatSoal(isi){
     document.addEventListener('mouseup', lepas);
   };
   el('bsEditor').addEventListener('dragstart', e=>{ if(e.target.closest && e.target.closest('img')) e.preventDefault(); });
-  el('bsEditor').onclick = e=>{
+  el('bsEditor').onclick = async e=>{
+    const hs = e.target.closest('[data-bshapus]');
+    if(hs){
+      const i = Number(hs.dataset.bshapus), s = BS.soal[i];
+      if(!s) return;
+      const lanjut = await konfirmasi('Hapus soal ini dari lembar? ("'+String(s.Teks).slice(0,40)+(String(s.Teks).length>40?'…':'')+'")');
+      if(!lanjut) return;
+      BS.soal.splice(i,1);
+      const blok = hs.closest('.bsSoalBlok'); if(blok) blok.remove();
+      el('bsEditor').querySelectorAll('[data-bshapus]').forEach(b=>{ const bi = Number(b.dataset.bshapus); if(bi>i) b.dataset.bshapus = String(bi-1); });
+      el('bsEditor').querySelectorAll('.bsSoalBlok[data-isi]').forEach(b=>{ const bi = Number(b.dataset.isi); if(bi>i) b.dataset.isi = String(bi-1); });
+      try{ await bsSimpanDok(namaKelas()); toast('🗑 Soal dihapus dari lembar'); }
+      catch(err){ toast('⛔ '+teksErr(err)); }
+      aturSemua();
+      return;
+    }
     const img = e.target.closest('img');
     const p = el('bsImgTool');
     if(!img){ if(p) p.hidden = true; bsImgAktif = null; return; }
@@ -4492,8 +4524,12 @@ async function modBuatSoal(isi){
     const lanjut = await konfirmasi('Hapus soal ini dari daftar? ("'+String(s.Teks).slice(0,40)+(String(s.Teks).length>40?'…':'')+'")');
     if(!lanjut) return;
     BS.soal.splice(i,1);
+    if(BS.lembarKotor){
+      const blok = el('bsEditor').querySelector('.bsSoalBlok[data-isi="'+i+'"]'); if(blok) blok.remove();
+      el('bsEditor').querySelectorAll('[data-bshapus]').forEach(b=>{ const bi = Number(b.dataset.bshapus); if(bi>i) b.dataset.bshapus = String(bi-1); });
+      el('bsEditor').querySelectorAll('.bsSoalBlok[data-isi]').forEach(b=>{ const bi = Number(b.dataset.isi); if(bi>i) b.dataset.isi = String(bi-1); });
+    } else el('bsEditor').innerHTML = kertasDariSoal();
     try{
-      if(!BS.lembarKotor) el('bsEditor').innerHTML = kertasDariSoal();
       await bsSimpanDok(namaKelas());
       toast('🗑 Soal dihapus dari daftar');
       aturSemua();
