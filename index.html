@@ -270,6 +270,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 .bsKertas img{cursor:move}
 .bsKop{cursor:default}
 .bsKop img{cursor:default}
+.bsMateri{min-width:180px;display:inline-block;border-bottom:1px dotted #9CA3AF;cursor:text}
+.bsMateri:empty:before{content:attr(data-ph);color:#9CA3AF}
 .bsSoalBlok{position:relative}
 .bsSoalHapus{position:absolute;top:0;right:0;background:#FEE2E2;border:none;border-radius:8px;color:#B91C1C;cursor:pointer;font-size:15px;padding:3px 8px;line-height:1.2;box-shadow:0 1px 2px rgba(0,0,0,.18)}
 .bsSoalHapus:hover{background:#DC2626;color:#fff}
@@ -2143,7 +2145,8 @@ async function modPengaturan(isi){
         <button type="button" id="stKopTengah" class="btn kecil" title="Rata tengah">≡</button>
         <button type="button" id="stKopKanan" class="btn kecil" title="Rata kanan">➡</button>
         <button type="button" id="stKopLogo" class="btn kecil">🏫 Logo</button>
-        <button type="button" id="stKopStandar" class="btn kecil">♻️ Standar</button>
+        <button type="button" id="stKopKotak" class="btn kecil" title="Kotak kosong (mis. untuk nilai)">🔲 Kotak</button>
+        <button type="button" id="stKopStandar" class="btn kecil">♻️ Bentuk</button>
       </div>
       <div class="barisAtas" id="stKopChip" style="margin-bottom:8px;flex-wrap:wrap"></div>
       <div id="stKop" class="bsKertas serif" contenteditable="true" style="min-height:200px"></div>
@@ -2195,8 +2198,8 @@ async function modPengaturan(isi){
     finally{ b.disabled = false; }
   };
   // kop soal ujian (operator)
-  el('stKop').innerHTML = (SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar();
-  const kopToken = [['NAMA_SEKOLAH','Nama Sekolah'],['ALAMAT','Alamat'],['TA','Th. Ajaran'],['JUDUL_UJIAN','Judul Ujian'],['MAPEL','Mapel'],['KELAS','Kelas'],['GURU','Guru'],['SEMESTER','Semester'],['NAMA_SISWA','Nama Siswa'],['NIS','NIS']];
+  el('stKop').innerHTML = (SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar('atas');
+  const kopToken = [['NAMA_SEKOLAH','Nama Sekolah'],['ALAMAT','Alamat'],['TA','Th. Ajaran'],['JUDUL_UJIAN','Judul Ujian'],['MAPEL','Mapel'],['KELAS','Kelas'],['SEMESTER','Semester'],['MATERI','Materi (diisi guru)'],['NAMA_SISWA','Nama Siswa'],['NIS','NIS']];
   el('stKopChip').innerHTML = kopToken.map(t=>`<button type="button" class="btn kecil" data-koptoken="[${t[0]}]" style="font-size:11px">+ ${t[1]}</button>`).join('');
   el('stKopChip').onclick = e=>{
     const b = e.target.closest('[data-koptoken]'); if(!b) return;
@@ -2225,9 +2228,17 @@ async function modPengaturan(isi){
     el('stKop').focus();
     document.execCommand('insertHTML', false, `<img src="${SEKOLAH.LogoSekolah}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;vertical-align:middle">`);
   };
-  el('stKopStandar').onclick = async ()=>{
-    const lanjut = await konfirmasi('Kembalikan kop ke bentuk standar? Perubahan yang belum disimpan akan hilang.');
-    if(lanjut) el('stKop').innerHTML = kopSoalStandar();
+  el('stKopKotak').onclick = ()=>{
+    el('stKop').focus();
+    document.execCommand('insertHTML', false, '<span style="display:inline-block;width:64px;border:1.5px solid #111;height:20px;vertical-align:middle"></span>');
+  };
+  el('stKopStandar').onclick = ()=>{
+    bukaModal('♻️ Pilih Bentuk Kop', '<p class="kecil">Pilih bentuk awal kop — setelah terpasang tetap bebas Anda ubah. Semua bentuk sudah memuat tabel Mata Pelajaran, Materi (diisi guru), Nama &amp; NIS (kosong, diisi siswa), dan kotak Nilai.</p>', [
+      {label:'Standar — 1 logo', cb:()=>{ el('stKop').innerHTML = kopSoalStandar('atas'); }},
+      {label:'🏫🏫 Dua logo kiri-kanan', cb:()=>{ el('stKop').innerHTML = kopSoalStandar('dua'); }},
+      {label:'Tanpa logo', cb:()=>{ el('stKop').innerHTML = kopSoalStandar('tanpa'); }},
+      {label:'Batal', cb:()=>{}}
+    ]);
   };
   el('stKopSimpan').onclick = async ()=>{
     const b = el('stKopSimpan'); b.disabled = true;
@@ -4334,38 +4345,51 @@ const BS_INSTR = {
   C:'Cocokkan soal dengan jawaban yang paling benar dari daftar jawaban di bawah!',
   D:'Uraikan jawaban pertanyaan-pertanyaan berikut ini!'
 };
-function kopSoalStandar(){
-  return `<div style="text-align:center;border-bottom:3px double #111;padding:10px 80px;margin-bottom:12px">${SEKOLAH.LogoSekolah?`<img src="${esc(SEKOLAH.LogoSekolah)}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;vertical-align:middle">`:''}
-      <div style="font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase">[NAMA_SEKOLAH]</div>
+function kopSoalStandar(mode){
+  const infoTeks = `<div style="font-size:17px;font-weight:700;letter-spacing:1px;text-transform:uppercase">[NAMA_SEKOLAH]</div>
       <div style="font-size:12px;text-transform:uppercase">[ALAMAT]</div>
-      <div style="font-size:12px">TAHUN AJARAN [TA]</div>
-    </div>
+      <div style="font-size:12px">TAHUN AJARAN [TA]</div>`;
+  const logo = SEKOLAH.LogoSekolah ? `<img src="${esc(SEKOLAH.LogoSekolah)}" style="width:70px;height:70px;object-fit:cover;border-radius:50%">` : '';
+  let kepala;
+  if(mode==='dua'){
+    kepala = `<table style="width:100%;border-collapse:collapse;border-bottom:3px double #111;margin-bottom:12px"><tr>
+        <td style="width:84px;text-align:center;vertical-align:middle;padding:6px 4px">${logo}</td>
+        <td style="text-align:center;vertical-align:middle;padding:6px 0">${infoTeks}</td>
+        <td style="width:84px;text-align:center;vertical-align:middle;padding:6px 4px">${logo}</td>
+      </tr></table>`;
+  } else {
+    kepala = `<div style="text-align:center;border-bottom:3px double #111;padding:10px 80px;margin-bottom:12px">${mode==='tanpa'?'':logo}
+      ${infoTeks}
+    </div>`;
+  }
+  return kepala + `
     <div style="text-align:center;font-weight:700;font-size:15px;margin-bottom:10px">[JUDUL_UJIAN]</div>
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">
       <tr style="border-top:1.5px solid #111">
-        <td style="width:132px;padding:4px 6px">Mata Pelajaran :</td>
+        <td style="padding:4px 6px;white-space:nowrap">Mata Pelajaran :</td>
         <td style="padding:4px 6px"><b>[MAPEL]</b></td>
-        <td style="width:70px;padding:4px 6px">Kelas :</td>
-        <td style="padding:4px 6px"><b>[KELAS]</b></td>
+        <td style="width:70px;padding:4px 6px">Nama :</td>
+        <td style="padding:4px 6px">[NAMA_SISWA]</td>
       </tr>
       <tr>
-        <td style="padding:4px 6px">Nama :</td>
-        <td style="padding:4px 6px">[NAMA_SISWA]</td>
+        <td style="padding:4px 6px">Materi :</td>
+        <td style="padding:4px 6px">[MATERI]</td>
         <td style="padding:4px 6px">NIS :</td>
         <td style="padding:4px 6px">[NIS]</td>
       </tr>
       <tr style="border-bottom:1.5px solid #111">
-        <td style="padding:4px 6px">Guru :</td>
-        <td style="padding:4px 6px"><b>[GURU]</b></td>
-        <td style="padding:4px 6px">Semester :</td>
-        <td style="padding:4px 6px"><b>[SEMESTER]</b></td>
+        <td style="padding:4px 6px">Kelas / Semester :</td>
+        <td style="padding:4px 6px"><b>[KELAS] / [SEMESTER]</b></td>
+        <td style="padding:4px 6px">Nilai :</td>
+        <td style="padding:4px 6px"><span style="display:inline-block;width:64px;border:1.5px solid #111;height:20px;vertical-align:middle"></span></td>
       </tr>
     </table>`;
 }
-function kopSoalHtml(d){
-  const t = String((SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar());
+function kopSoalHtml(d, bisaEdit){
+  const t = String((SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar('atas'));
   const jenis = d.Jenis || d.jenis || 'UTS';
   const smt = String(d.Semester || (jenis==='UTS'?'Ganjil':'Genap'));
+  const materi = String(d.Materi || d.materi || '');
   return t
     .replace(/\[NAMA_SEKOLAH\]/g, esc(SEKOLAH.NamaSekolah||''))
     .replace(/\[ALAMAT\]/g, esc(kopAlamat(SEKOLAH.AlamatSekolah) || SEKOLAH.AlamatSekolah || ''))
@@ -4373,8 +4397,11 @@ function kopSoalHtml(d){
     .replace(/\[JUDUL_UJIAN\]/g, (jenis==='UTS'?'ULANGAN TENGAH SEMESTER':'ULANGAN AKHIR SEMESTER') + ' — SEMESTER ' + smt.toUpperCase())
     .replace(/\[MAPEL\]/g, esc(d.Mapel || d.mapel || '—'))
     .replace(/\[KELAS\]/g, esc(d.NamaKelas || '—'))
-    .replace(/\[GURU\]/g, esc(d.GuruNama || '—'))
     .replace(/\[SEMESTER\]/g, esc(smt))
+    .replace(/\[GURU\]/g, esc(d.GuruNama || ''))
+    .replace(/\[MATERI\]/g, bisaEdit
+      ? `<span class="bsMateri" contenteditable="true" data-ph="materi yang diujikan — diisi guru">${materi}</span>`
+      : (materi ? (materi.includes('<') ? materi : esc(materi)) : '……………………'))
     .replace(/\[NAMA_SISWA\]/g, '...........................')
     .replace(/\[NIS\]/g, '...................');
 }
@@ -4401,24 +4428,29 @@ async function bsMuat(){
     BS.dikumpulkan = !!(BS.dok && BS.dok.Dikumpulkan);
     BS.status = (BS.dok && BS.dok.Status) || '';
     BS.catatan = (BS.dok && BS.dok.CatatanKs) || '';
-  }catch(_){ BS.soal = []; BS.instruksi = Object.assign({}, BS_INSTR); BS.dikumpulkan = false; BS.status = ''; BS.catatan = ''; }
+    BS.materi = (BS.dok && BS.dok.Materi) || '';
+  }catch(_){ BS.soal = []; BS.instruksi = Object.assign({}, BS_INSTR); BS.dikumpulkan = false; BS.status = ''; BS.catatan = ''; BS.materi = ''; }
 }
 async function bsSimpanDok(namaKelas){
   const ed = el('bsEditor');
   let lembar = ((BS.dok && BS.dok.Lembar) || '');
+  let materi = BS.materi || '';
   if(ed){
+    const mEl = ed.querySelector('.bsMateri');
+    if(mEl) materi = mEl.innerHTML.trim();
     const kl = ed.cloneNode(true);
     kl.querySelectorAll('[data-bshapus]').forEach(b=>b.remove());
     kl.querySelectorAll('.bsKop').forEach(b=>b.remove());
     lembar = kl.innerHTML;
   }
+  BS.materi = materi;
   const resetStatus = (BS.status==='diajukan' || BS.status==='disetujui');
   const statusBaru = resetStatus ? '' : (BS.status||'');
   await setDoc(doc(db,'soal_ujian', bsIdDoc()), {
     SekolahId:AKUN.SekolahId, GuruEmail:AKUN.Email, GuruNama:AKUN.NamaPengguna||namaGuru(AKUN.Email)||'',
     KelasId:BS.kelasId, NamaKelas:namaKelas||'', Mapel:BS.mapel, Jenis:BS.jenis,
     Semester: BS.jenis==='UTS'?'Ganjil':'Genap', TahunAjaran:SEKOLAH.TahunAjaran||taDefault(),
-    Instruksi:BS.instruksi, Soal:BS.soal, Lembar:lembar, Dikumpulkan:BS.dikumpulkan,
+    Instruksi:BS.instruksi, Soal:BS.soal, Lembar:lembar, Materi:materi, Dikumpulkan:BS.dikumpulkan,
     Status:statusBaru, CatatanKs:BS.catatan||'', DiperbaruiPada:serverTimestamp()
   }, {merge:true});
   BS.status = statusBaru;
@@ -4504,7 +4536,7 @@ async function modBuatSoal(isi){
   const ringkasTeks = t => String(t).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
   const kertasDariSoal = ()=>{
     const bagianAda = ['A','B','C','D'].filter(b=>BS.soal.some(s=>s.Bagian===b));
-    return `<div class="bsKop" contenteditable="false">${kopSoalHtml({Jenis:BS.jenis, Mapel:BS.mapel, NamaKelas:namaKelas(), GuruNama:(AKUN.NamaPengguna||(BS.dok&&BS.dok.GuruNama)||''), Semester:(BS.jenis==='UTS'?'Ganjil':'Genap')})}</div>
+    return `<div class="bsKop" contenteditable="false">${kopSoalHtml({Jenis:BS.jenis, Mapel:BS.mapel, NamaKelas:namaKelas(), GuruNama:(AKUN.NamaPengguna||(BS.dok&&BS.dok.GuruNama)||''), Semester:(BS.jenis==='UTS'?'Ganjil':'Genap'), Materi:BS.materi}, true)}</div>
       ${BS.soal.length ? bagianAda.map(b=>{
         const daftar = BS.soal.map((s,i)=>({s,i})).filter(x=>x.s.Bagian===b);
         const jawabC = b==='C' ? daftar.map((x,n)=>({h:String.fromCharCode(97+n), t:x.s.Jawaban})).filter(x=>x.t) : [];
@@ -4529,7 +4561,7 @@ async function modBuatSoal(isi){
     });
   };
   const muatEditor = ()=>{
-    el('bsEditor').innerHTML = (BS.dok && BS.dok.Lembar) ? `<div class="bsKop" contenteditable="false">${kopSoalHtml({Jenis:BS.jenis, Mapel:BS.mapel, NamaKelas:namaKelas(), GuruNama:(AKUN.NamaPengguna||(BS.dok&&BS.dok.GuruNama)||''), Semester:(BS.jenis==='UTS'?'Ganjil':'Genap')})}</div>` + buangKopLama(BS.dok.Lembar) : kertasDariSoal();
+    el('bsEditor').innerHTML = (BS.dok && BS.dok.Lembar) ? `<div class="bsKop" contenteditable="false">${kopSoalHtml({Jenis:BS.jenis, Mapel:BS.mapel, NamaKelas:namaKelas(), GuruNama:(AKUN.NamaPengguna||(BS.dok&&BS.dok.GuruNama)||''), Semester:(BS.jenis==='UTS'?'Ganjil':'Genap'), Materi:BS.materi}, true)}</div>` + buangKopLama(BS.dok.Lembar) : kertasDariSoal();
     BS.lembarKotor = false;
     pasangTombolHapus();
   };
