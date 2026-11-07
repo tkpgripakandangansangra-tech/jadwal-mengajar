@@ -251,6 +251,7 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 }
 /* ---- ujian lisan ---- */
 #menu .menuBtn[data-modul="lisan"]{background:linear-gradient(135deg,#9A3412,#F97316)}
+#menu .menuBtn[data-modul="soalMasuk"]{background:linear-gradient(135deg,#78350F,#F59E0B)}
 .lisIn{padding:5px 6px;font-size:13px;border-radius:8px}
 .ujTabBar{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 #ujJudul{margin:18px 18px 14px}
@@ -364,8 +365,8 @@ const db = getFirestore(app);
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
-  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Kelas & Pelajaran'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['pengumuman','📣','#EF4444','Pengumuman & Notifikasi'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
-  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
+  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Kelas & Pelajaran'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['soalMasuk','📥','#F59E0B','Soal Masuk'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['pengumuman','📣','#EF4444','Pengumuman & Notifikasi'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
+  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['soalMasuk','📥','#F59E0B','Soal Masuk'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
   guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['ujian','📝','#DB2777','Jadwal Ujian'],['buatSoal','✍️','#A78BFA','Buat Soal Ujian'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
@@ -1273,7 +1274,7 @@ const MODUL = {
   pengaturan: modPengaturan, pengumuman: modPengumumanNotif, usulan: modUsulan, jadwalSaya: modJadwalSaya,
   ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, dokumentasi: modDokumentasi,
   lisan: async ()=>{ await modLisan('lisan'); },
-  buatSoal: modBuatSoal,
+  buatSoal: modBuatSoal, soalMasuk: modSoalMasuk,
   alatMigrasi: modMigrasi
 };
 
@@ -4578,6 +4579,54 @@ async function modBuatSoal(isi){
   };
   aturSemua();
   muatEditor();
+}
+
+/* ---------- soal masuk (op & ks) ---------- */
+async function modSoalMasuk(isi){
+  let daftar = [];
+  const muat = async ()=>{
+    const s = await getDocs(query(collection(db,'soal_ujian'), where('SekolahId','==',AKUN.SekolahId)));
+    daftar = s.docs.map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=>((b.Dikumpulkan?1:0)-(a.Dikumpulkan?1:0)) || ((b.DiperbaruiPada?.seconds||0)-((a.DiperbaruiPada?.seconds)||0)));
+    if(!daftar.length){
+      isi.innerHTML = `<h1 class="judul">📥 Soal Ujian dari Guru</h1>
+        <div class="kartu"><p>Belum ada soal dari guru. Guru membuat soal di menu <b>✍️ Buat Soal Ujian</b> lalu menekan tombol <b>📨 Kumpulkan ke KS &amp; Operator</b> — soalnya akan muncul di sini.</p></div>`;
+      return;
+    }
+    isi.innerHTML = `<h1 class="judul">📥 Soal Ujian dari Guru</h1>
+      ${daftar.map(d=>`<div class="kartu">
+        <div class="barisAtas"><h3 style="margin:0">${d.Dikumpulkan?'✅':'⏳'} ${esc(d.Jenis||'')} — ${esc(d.Mapel||'—')}</h3>
+          <span class="kecil">Kelas ${esc(d.NamaKelas||'—')}</span></div>
+        <p class="kecil">✍️ ${esc(d.GuruNama||namaGuru(d.GuruEmail)||d.GuruEmail||'—')} · ${(d.Soal||[]).length} soal · Semester ${esc(d.Semester||'—')} · TA ${esc(d.TahunAjaran||'—')} · diperbarui ${d.DiperbaruiPada&&d.DiperbaruiPada.seconds?new Date(d.DiperbaruiPada.seconds*1000).toLocaleString('id-ID'):'—'}</p>
+        <button type="button" class="btn utama kecil" data-lihat="${d.id}">👁️ Lihat Lembar Soal</button>
+      </div>`).join('')}`;
+  };
+  const lihat = d=>{
+    isi.innerHTML = `<h1 class="judul">📥 Soal Ujian dari Guru</h1>
+      <div class="kartu">
+        <div class="barisAtas">
+          <button type="button" class="btn kecil" data-kembali="1">⬅️ Kembali</button>
+          <h3 style="margin:0">${esc(d.Jenis||'')} — ${esc(d.Mapel||'—')} · Kelas ${esc(d.NamaKelas||'—')}</h3>
+          <button type="button" class="btn utama kecil" data-cetak="${d.id}">🖨️ Cetak</button>
+        </div>
+        <p class="kecil">✍️ ${esc(d.GuruNama||namaGuru(d.GuruEmail)||d.GuruEmail||'—')} · Semester ${esc(d.Semester||'—')} · TA ${esc(d.TahunAjaran||'—')} · ${(d.Soal||[]).length} soal · ${d.Dikumpulkan?'✅ sudah dikumpulkan':'⏳ belum dikumpulkan (masih bisa berubah)'}</p>
+      </div>
+      <div class="bsKertas serif">${d.Lembar || '<p style="text-align:center;color:#6B7280;margin-top:14px">Guru belum menyusun lembar soal untuk ini.</p>'}</div>`;
+  };
+  const cetak = d=>{
+    const area = el('areaCetak');
+    area.className = 'potret';
+    area.innerHTML = `<div style="font-family:'Times New Roman',serif;color:#000">${d.Lembar || ''}</div>`;
+    window.print();
+    area.className = '';
+  };
+  isi.onclick = async e=>{
+    const kl = e.target.closest('[data-kembali]'); if(kl){ await muat(); return; }
+    const ct = e.target.closest('[data-cetak]'); if(ct){ const d = daftar.find(x=>x.id===ct.dataset.cetak); if(d) cetak(d); return; }
+    const b = e.target.closest('[data-lihat]'); if(!b) return;
+    const d = daftar.find(x=>x.id===b.dataset.lihat); if(d) lihat(d);
+  };
+  await muat();
 }
 
 /* ---------- reset ---------- */
