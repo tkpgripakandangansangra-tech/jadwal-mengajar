@@ -4158,7 +4158,7 @@ function brStatAwal(){
 }
 
 /* ---------- buat soal ujian (guru) ---------- */
-let BS = {kelasId:'', mapel:'', jenis:'UTS', bagian:'A', soal:[], instruksi:{}, gambar:'', gUrl:'', lembarKotor:false, dikumpulkan:false};
+let BS = {kelasId:'', mapel:'', jenis:'UTS', bagian:'A', soal:[], instruksi:{}, gambar:'', gUrl:'', opsiGbr:{}, lembarKotor:false, dikumpulkan:false};
 const BS_INSTR = {
   A:'Berilah tanda silang (X) pada huruf a, b, c, atau d di depan jawaban yang paling benar!',
   B:'Jawablah pertanyaan-pertanyaan berikut dengan benar!',
@@ -4220,6 +4220,7 @@ async function modBuatSoal(isi){
       <div class="barisAtas" style="margin-bottom:6px">
         <button type="button" id="bsPilihGbr" class="btn kecil">🖼️ + Gambar</button>
         <input type="file" id="bsFile" accept="image/png,image/jpeg" hidden>
+        <input type="file" id="bsFileOpsi" accept="image/png,image/jpeg" hidden>
         <span id="bsGambarPrev" class="barisAtas" style="margin:0;gap:6px"></span>
       </div>
       <div id="bsOpsi"></div>
@@ -4256,12 +4257,17 @@ async function modBuatSoal(isi){
     el('bsTabs').innerHTML = ['A','B','C','D'].map(b=>`<button type="button" class="bsTab${BS.bagian===b?' on':''}" data-bsb="${b}">GAYA ${b}</button>`).join('')
       + `<span class="kecil" style="margin-left:auto">${BS.bagian==='A'?'pilihan ganda (a–d)':BS.bagian==='C'?'mencocokkan soal ↔ daftar jawaban':'uraian / isian'}</span>`;
   };
+  const gambarThumbOpsi = h=>{
+    const sp = el('bsOpsiPrev'+h); if(!sp) return;
+    sp.innerHTML = BS.opsiGbr[h] ? `<img src="${esc(BS.opsiGbr[h])}" style="width:46px;height:46px;object-fit:cover;border-radius:6px"><button type="button" class="btnIkon" data-opsirms="${h}" title="Buang gambar pilihan ini" style="color:#F87171">✖</button>` : '';
+  };
   const gambarOpsi = ()=>{
     el('bsOpsi').innerHTML = BS.bagian==='A'
-      ? `<label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Pilihan jawaban</label><div class="bsOpsiGrid">${['A','B','C','D'].map(h=>`<label class="kecil">Pilihan ${h.toUpperCase()}<input id="bsOpsi${h}" placeholder="Pilihan ${h.toUpperCase()}"></label>`).join('')}</div>`
+      ? `<label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Pilihan jawaban — teks, gambar, atau keduanya</label><div class="bsOpsiGrid">${['A','B','C','D'].map(h=>`<label class="kecil">Pilihan ${h.toUpperCase()}<input id="bsOpsi${h}" placeholder="teks pilihan — boleh kosong bila hanya gambar"><span class="barisAtas" style="margin-top:4px;gap:6px"><button type="button" class="btn kecil" data-opsigbr="${h}">🖼️ + Gambar</button><span id="bsOpsiPrev${h}" class="barisAtas" style="margin:0;gap:4px"></span></span></label>`).join('')}</div>`
       : BS.bagian==='C'
       ? `<label class="kecil" style="font-weight:600;display:block;margin-bottom:3px">Jawaban soal ini — masuk daftar jawaban di bagian bawah lembar</label><input id="bsJawabC" placeholder="mis. terjemahan / jawaban singkat soal ini" style="margin-bottom:10px">`
       : '';
+    if(BS.bagian==='A') ['A','B','C','D'].forEach(h=>gambarThumbOpsi(h));
   };
   const gambarGmb = ()=>{
     const g = BS.gambar || BS.gUrl || '';
@@ -4305,7 +4311,7 @@ async function modBuatSoal(isi){
           ${daftar.map((x,n)=>{
             const gbr = (x.s.Gambar || x.s.GbrUrl) ? `<img src="${esc(x.s.Gambar||x.s.GbrUrl)}" style="max-width:230px;border:1px solid #9CA3AF;margin-top:4px">` : '';
             return `<div class="bsSoalBlok" data-isi="${x.i}" style="margin-top:8px">${n+1}. <span style="white-space:pre-wrap">${esc(x.s.Teks)}</span>${gbr}<button type="button" class="bsSoalHapus" data-bshapus="${x.i}" contenteditable="false" title="Hapus soal ini dari lembar">🗑</button>
-            ${x.s.Opsi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-top:4px;font-size:13px">${['A','B','C','D'].map(h=>`<span>${h.toLowerCase()}. ${esc(x.s.Opsi[h]||'…')}</span>`).join('')}</div>`:''}</div>`;
+            ${x.s.Opsi?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;margin-top:4px;font-size:13px">${['A','B','C','D'].map(h=>`<span>${h.toLowerCase()}. ${esc(x.s.Opsi[h]||(x.s.OpsiGbr&&x.s.OpsiGbr[h]?'':'…'))}${x.s.OpsiGbr&&x.s.OpsiGbr[h]?`<img src="${esc(x.s.OpsiGbr[h])}" style="max-width:130px;max-height:110px;object-fit:contain;display:block;margin:2px 0">`:''}</span>`).join('')}</div>`:''}</div>`;
           }).join('')}
           ${jawabC.length?`<div style="margin-top:10px;border-top:1px dashed #555;padding-top:6px"><b>Jawaban :</b>${jawabC.map(x=>`<span style="display:block;margin-top:3px">${x.h}. ${esc(x.t)}</span>`).join('')}</div>`:''}
         </div>`;
@@ -4350,6 +4356,20 @@ async function modBuatSoal(isi){
     e.target.value='';
   };
   el('bsPilihGbr').onclick = ()=>{ el('bsFile').click(); };
+  let opsiTarget = null;
+  el('bsOpsi').onclick = e=>{
+    const g = e.target.closest('[data-opsigbr]');
+    if(g){ opsiTarget = g.dataset.opsigbr; el('bsFileOpsi').click(); return; }
+    const r = e.target.closest('[data-opsirms]');
+    if(r){ delete BS.opsiGbr[r.dataset.opsirms]; gambarThumbOpsi(r.dataset.opsirms); }
+  };
+  el('bsFileOpsi').onchange = async e=>{
+    const f = e.target.files[0]; if(!f || !opsiTarget) return;
+    toast('⏳ Memproses gambar…');
+    try{ BS.opsiGbr[opsiTarget] = await gbKompresFoto(f, 500, .55); gambarThumbOpsi(opsiTarget); toast('🖼️ Gambar ditempel di pilihan '+opsiTarget.toUpperCase()); }
+    catch(_){ toast('⛔ Gambar gagal diproses.'); }
+    e.target.value='';
+  };
   el('bsEditor').oninput = ()=>{ BS.lembarKotor = true; };
   let bsKursor = null, bsImgAktif = null;
   const bsSimpanKursor = ()=>{
@@ -4496,14 +4516,15 @@ async function modBuatSoal(isi){
     const teks = el('bsTeks').value.trim();
     if(!teks){ toast('⚠️ Tulis dulu soalnya.'); return; }
     const opsi = {};
+    const opsiGbr = {};
     if(BS.bagian==='A'){
-      ['A','B','C','D'].forEach(h=>{ opsi[h] = String(el('bsOpsi'+h).value||'').trim(); });
-      if(Object.values(opsi).some(v=>!v)){ toast('⚠️ GAYA A pilihan ganda — lengkapi keempat pilihan a–d.'); return; }
+      ['A','B','C','D'].forEach(h=>{ opsi[h] = String(el('bsOpsi'+h).value||'').trim(); if(BS.opsiGbr[h]) opsiGbr[h] = BS.opsiGbr[h]; });
+      if(['A','B','C','D'].some(h=>!opsi[h] && !opsiGbr[h])){ toast('⚠️ GAYA A pilihan ganda — lengkapi keempat pilihan (teks atau gambar).'); return; }
     }
     const jawabC = BS.bagian==='C' ? String(el('bsJawabC').value||'').trim() : '';
     if(BS.bagian==='C' && !jawabC){ toast('⚠️ GAYA C mencocokkan — tulis jawaban soal ini (masuk daftar jawaban).'); return; }
     BS.instruksi[BS.bagian] = el('bsInstr').value.trim() || BS_INSTR[BS.bagian];
-    BS.soal.push({Bagian:BS.bagian, Teks:teks, Gambar:BS.gambar||'', GbrUrl:BS.gUrl||'', Opsi:BS.bagian==='A'?opsi:null, Jawaban:jawabC||''});
+    BS.soal.push({Bagian:BS.bagian, Teks:teks, Gambar:BS.gambar||'', GbrUrl:BS.gUrl||'', Opsi:BS.bagian==='A'?opsi:null, OpsiGbr:BS.bagian==='A'?(Object.keys(opsiGbr).length?opsiGbr:null):null, Jawaban:jawabC||''});
     const b = el('bsSimpanSoal'); b.disabled = true; b.textContent = '⏳ MENYIMPAN…';
     try{
       if(!BS.lembarKotor) el('bsEditor').innerHTML = kertasDariSoal();
@@ -4511,7 +4532,7 @@ async function modBuatSoal(isi){
       el('bsTeks').value = '';
       if(BS.bagian==='A') ['A','B','C','D'].forEach(h=>{ el('bsOpsi'+h).value = ''; });
       if(BS.bagian==='C'){ const jc = el('bsJawabC'); if(jc) jc.value = ''; }
-      BS.gambar = ''; BS.gUrl = '';
+      BS.gambar = ''; BS.gUrl = ''; BS.opsiGbr = {};
       toast('✅ Soal tersimpan (total '+BS.soal.length+') — silakan ketik soal berikutnya'+(BS.lembarKotor?' — lembar tidak diubah, klik 🔄 Susun dari Soal bila ingin susun ulang':''));
       aturSemua();
     }catch(err){ BS.soal.pop(); toast('⛔ '+teksErr(err)+' — soal belum tersimpan, silakan ulangi.'); }
