@@ -104,8 +104,8 @@ label{display:block;font-size:13px;color:var(--teks2);margin:8px 0 2px}
 #menu .menuBtn[data-modul="kelas"]{background:linear-gradient(135deg,#7C2D12,#F97316)}
 #menu .menuBtn[data-modul="laporan"]{background:linear-gradient(135deg,#4C1D95,#8B5CF6)}
 #menu .menuBtn[data-modul="pengaturan"]{background:linear-gradient(135deg,#713F12,#EAB308)}
-#menu .menuBtn[data-modul="pengumuman"]{background:linear-gradient(135deg,#9D174D,#EC4899)}
-#menu .menuBtn[data-modul="notifikasi"]{background:linear-gradient(135deg,#7F1D1D,#EF4444)}
+#menu .menuBtn[data-modul="pengumuman"]{background:linear-gradient(135deg,#7F1D1D,#EF4444)}
+#menu .menuBtn[data-modul="dokumentasi"]{background:linear-gradient(135deg,#0C4A6E,#38BDF8)}
 #menu .menuBtn[data-modul="usulan"]{background:linear-gradient(135deg,#831843,#EC4899)}
 #menu .menuBtn[data-modul="jadwalSaya"]{background:linear-gradient(135deg,#134E4A,#2DD4BF)}
 #menu .menuBtn[data-modul="notifikasiSaya"]{background:linear-gradient(135deg,#164E63,#06B6D4)}
@@ -356,9 +356,9 @@ const db = getFirestore(app);
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const WARNA = ['#3B82F6','#EF4444','#10B981','#14B8A6','#F59E0B','#8B5CF6','#EC4899','#84CC16','#F97316','#06B6D4','#A855F7','#EAB308'];
 const MENU = {
-  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Kelas & Pelajaran'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['notifikasi','📣','#EF4444','Kirim Notifikasi'],['pengumuman','📢','#EC4899','Pengumuman'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
-  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
-  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['ujian','📝','#DB2777','Jadwal Ujian'],['buatSoal','✍️','#A78BFA','Buat Soal Ujian'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['arsip','🗂️','#38BDF8','Arsip Bukti'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
+  operator: [['beranda','🏠','#10B981','Beranda'],['guru','👨‍🏫','#2DD4BF','Daftar Guru'],['pelajaran','📚','#22C55E','Daftar Kelas & Pelajaran'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['susun','🗓️','#3B82F6','Jadwal Pelajaran'],['ujian','📝','#DB2777','Jadwal Ujian'],['pengganti','🔄','#0EA5E9','Izin & Pengganti'],['pengumuman','📣','#EF4444','Pengumuman & Notifikasi'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['pengaturan','⚙️','#EAB308','Pengaturan'],['alatMigrasi','🧰','#0EA5E9','Alat Migrasi'],['keluar','🚪','#94A3B8','Keluar']],
+  kepala_sekolah: [['beranda','🏠','#10B981','Beranda'],['siswa','🧑‍🎓','#38BDF8','Daftar Siswa'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['usulan','📋','#F97316','Persetujuan Jadwal'],['lisan','🎤','#F97316','Ujian Lisan'],['ijin','🌴','#F97316','Izin Guru'],['laporan','📄','#8B5CF6','Laporan & Cetak'],['keluar','🚪','#94A3B8','Keluar']],
+  guru: [['beranda','🏠','#10B981','Beranda'],['jadwalSaya','📅','#2DD4BF','Jadwal Saya'],['ujian','📝','#DB2777','Jadwal Ujian'],['buatSoal','✍️','#A78BFA','Buat Soal Ujian'],['ijinSaya','🌴','#F97316','Izin Mengajar'],['dokumentasi','📷','#38BDF8','Dokumentasi Foto'],['notifikasiSaya','🔔','#06B6D4','Notifikasi'],['keluar','🚪','#94A3B8','Keluar']]
 };
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
 
@@ -1262,8 +1262,8 @@ async function bukaModul(n){
 const MODUL = {
   beranda: modBeranda, susun: modSusun, guru: modGuru, laporan: modLaporan,
   ujian: async (isi)=>{ if(AKUN.Peran==='guru'){ await modUjianGuru(isi); } else { await modUjian(isi); } },
-  pengaturan: modPengaturan, notifikasi: modNotifikasi, pengumuman: modPengumuman, usulan: modUsulan, jadwalSaya: modJadwalSaya,
-  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, arsip: modArsip,
+  pengaturan: modPengaturan, pengumuman: modPengumumanNotif, usulan: modUsulan, jadwalSaya: modJadwalSaya,
+  ijinSaya: modIjinGuru, ijin: modIjinKs, pengganti: modIjinOp, pelajaran: modPelajaran, siswa: modSiswa, dokumentasi: modDokumentasi,
   lisan: async ()=>{ await modLisan('lisan'); },
   buatSoal: modBuatSoal,
   alatMigrasi: modMigrasi
@@ -2213,9 +2213,18 @@ function muatTicker(){
   }, ()=>{});
 }
 
+/* ---------- pengumuman & notifikasi (operator) ---------- */
+async function modPengumumanNotif(isi){
+  isi.innerHTML = `<h1 class="judul">📣 Pengumuman &amp; Notifikasi</h1>
+    <div id="pnPu"></div>
+    <div id="pnNt" style="margin-top:16px"></div>`;
+  await modPengumuman(el('pnPu'));
+  await modNotifikasi(el('pnNt'));
+}
+
 /* ---------- pengumuman (operator) ---------- */
 async function modPengumuman(isi){
-  isi.innerHTML = `<h1 class="judul">📢 Pengumuman</h1>
+  isi.innerHTML = `<h3 style="margin:0 0 10px">📢 Pengumuman</h3>
     <div class="kartu" style="max-width:620px">
       <p class="kecil">Pengumuman <b>Wali Murid</b> tampil di Mode Wali (halaman publik tanpa akun). Pengumuman <b>Guru &amp; KS</b> tampil sebagai teks berjalan di bawah judul sekolah — terus berjalan walau pengguna berpindah menu.</p>
       <label>Judul<input id="puJudul" placeholder="mis. Rapat guru besok pukul 08.00"></label>
@@ -2268,7 +2277,7 @@ async function modPengumuman(isi){
 /* ---------- notifikasi (op) ---------- */
 async function modNotifikasi(isi){
   const guru = GURU.filter(g=>g.Peran==='guru' && (g.StatusAkun||'aktif')==='aktif');
-  isi.innerHTML = `<h1 class="judul">📣 Kirim Notifikasi ke Guru</h1>
+  isi.innerHTML = `<h3 style="margin:0 0 10px">📣 Kirim Notifikasi ke Guru</h3>
     <div class="kartu" style="max-width:560px">
       <label>Judul<input id="ntJudul" placeholder="mis. Rapat guru"></label>
       <label>Isi<textarea id="ntIsi" rows="3" placeholder="Tulis isi notifikasi…"></textarea></label>
@@ -3899,6 +3908,27 @@ async function modSiswa(isi){
   tampil();
 }
 
+/* ---------- dokumentasi foto ---------- */
+let DOK = {folder:'arsip'};
+async function modDokumentasi(isi){
+  const FOLDER = [['arsip','🗂️ Arsip Bukti']];
+  const buka = async (fid)=>{
+    DOK.folder = fid;
+    const kotak = el('dokIsi'); if(!kotak) return;
+    document.querySelectorAll('[data-dokf]').forEach(b=>b.classList.toggle('on', b.dataset.dokf===fid));
+    kotak.innerHTML = '<p class="kecil">memuat…</p>';
+    if(fid==='arsip'){ try{ await modArsip(kotak); }catch(err){ kotak.innerHTML = '<p class="kecil">⛔ '+teksErr(err)+'</p>'; } }
+  };
+  isi.innerHTML = `<h1 class="judul">📷 Dokumentasi Foto</h1>
+    <div class="kartu">
+      <p class="kecil">Kumpulan foto &amp; dokumentasi kegiatan sekolah, disusun per folder. Folder kegiatan lain (upacara, lomba, wisuda, dll.) akan ditambahkan menyusul.</p>
+      <div class="ujTabBar" style="margin-bottom:0">${FOLDER.map(([id,label])=>`<button type="button" class="ujTab" data-dokf="${id}">${label}</button>`).join('')}</div>
+    </div>
+    <div id="dokIsi"></div>`;
+  isi.onclick = e=>{ const c = e.target.closest('[data-dokf]'); if(c) buka(c.dataset.dokf); };
+  await buka(FOLDER.some(f=>f[0]===DOK.folder) ? DOK.folder : 'arsip');
+}
+
 /* ---------- arsip bukti ---------- */
 let ARS = {data:[], q:''};
 async function modArsip(isi){
@@ -3907,7 +3937,7 @@ async function modArsip(isi){
     const s = await getDocs(query(collection(db,'arsip_bukti'), where('SekolahId','==',AKUN.SekolahId)));
     ARS.data = s.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>((b.DibuatPada?.seconds)||0)-((a.DibuatPada?.seconds)||0));
   }catch(err){ ARS.data = []; toast('⛔ '+teksErr(err)); }
-  isi.innerHTML = `<h1 class="judul">🗂️ Arsip Bukti Sekolah</h1>
+  isi.innerHTML = `<h3 style="margin:0 0 10px">🗂️ Arsip Bukti Sekolah</h3>
     <div class="kartu">
       <p class="kecil">Foto & pesan suara bukti yang dikirim lewat 💬 Obrolan tersimpan permanen di sini — <b>tidak ikut terhapus</b> saat reset tahunan maupun reset pabrik. Ketuk foto untuk melihat besar, ketuk ▶ pada suara untuk memutar.</p>
       <label style="max-width:280px">🔎 Cari keterangan / pengirim<input id="arCari" placeholder="ketik di sini…" value="${esc(ARS.q)}"></label>
