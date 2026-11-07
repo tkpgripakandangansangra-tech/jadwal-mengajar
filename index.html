@@ -372,6 +372,7 @@ const MENU = {
 const PW_DEFAULT = {Mode:'otomatis', JamMasuk:'07:15', DurasiJP:35, JumlahJP:10, HariAktif:['Senin','Selasa','Rabu','Kamis','Jumat'], Istirahat:[{SetelahJP:3,Menit:15},{SetelahJP:6,Menit:20}]};
 
 let AKUN=null, SEKOLAH=null, GURU=[], sedangMendaftar=false, lepasNotif=null, KODE_VALID='';
+let GOOGLE = {id:'', token:null, tokenSampai:0, folderId:''};
 let SK = {kelasId:'', kelas:null, daftarKelas:[], pw:null, mapel:[], jadwal:[], semua:[], usulan:null, terpilih:null};
 let SETUP = {nama:'', alamat:'', ta:'', jenjang:'SD', logo:''};
 
@@ -914,6 +915,7 @@ async function mulaiSesi(u){
   AKUN = {...a, Email:email};
   const s = await getDoc(doc(db,'sekolah',a.SekolahId));
   SEKOLAH = s.exists() ? s.data() : {NamaSekolah:'Sekolah', AlamatSekolah:'', TahunAjaran:'', LogoSekolah:'', Jenjang:''};
+  GOOGLE = {id:SEKOLAH.GoogleDriveId||'', token:null, tokenSampai:0, folderId:''};
   if(AKUN.Peran !== 'guru'){
     const r = await getDocs(query(collection(db,'akun_pengguna'), where('SekolahId','==',a.SekolahId)));
     GURU = r.docs.map(d=>({...d.data()})).sort((x,y)=>(x.NamaPengguna||'').localeCompare(y.NamaPengguna||''));
@@ -2122,6 +2124,12 @@ async function modPengaturan(isi){
       <div id="kodeBox" class="kodeBox">memuat…</div>
       <button id="btnKodeBaru" class="btn">🔄 Buat / Ganti Kode</button>
     </div>
+    <div class="kartu" style="max-width:560px"><h3>☁️ Google Drive</h3>
+      <p class="kecil">Gudang arsip abadi — gambar soal, dokumen &amp; foto kegiatan disimpan di Google Drive (tiap berkas jadi tautan, tidak membebani database). Isi ID Klien dari Google Cloud Console sekali saja; kosongkan untuk kembali menyimpan gambar di database.</p>
+      <label>ID Klien Google</label>
+      <input id="stGdId" value="${esc(SEKOLAH.GoogleDriveId||'')}" placeholder="xxxxx.apps.googleusercontent.com">
+      <button id="stGdSimpan" class="btn utama" style="margin-top:8px">💾 Simpan ID Google</button>
+    </div>
     </div>
     <div id="pengaturanKanan">
     <div class="kartu" style="max-width:560px"><h3>👔 Kepala Sekolah</h3>
@@ -2155,6 +2163,17 @@ async function modPengaturan(isi){
       toast('✅ Kode baru aktif: '+k+' — bagikan kepada KS & Guru');
       bukaModal('🔑 Kode Pendaftaran Baru', `<div class="kodeBox">${k}</div><p class="kecil">Bagikan kepada Kepala Sekolah &amp; Guru untuk mendaftar.</p>`, [{label:'Tutup'}]);
     }catch(err){ toast('⛔ '+teksErr(err)); }
+  };
+  el('stGdSimpan').onclick = async ()=>{
+    const b = el('stGdSimpan'); b.disabled = true;
+    try{
+      const id = el('stGdId').value.trim();
+      await updateDoc(doc(db,'sekolah',AKUN.SekolahId), {GoogleDriveId:id});
+      SEKOLAH = {...SEKOLAH, GoogleDriveId:id};
+      GOOGLE = {id, token:null, tokenSampai:0, folderId:''};
+      toast(id ? '✅ Google Drive aktif — berkas selanjutnya tersimpan di Drive' : '✅ Tersimpan — gambar kembali disimpan di database');
+    }catch(err){ toast('⛔ '+teksErr(err)); }
+    finally{ b.disabled = false; }
   };
   // kursi kepala sekolah
   const ksEmail = SEKOLAH.EmailKepalaSekolah || '';
@@ -2504,6 +2523,80 @@ function gbKompresFoto(file, maksPx, kualitas){
       img.onerror = gagal; img.src = ev.target.result;
     };
     baca.onerror = gagal; baca.readAsDataURL(file);
+  });
+}
+function gbKompresBlob(file, maksPx, kualitas){
+  return new Promise((selesai, gagal)=>{
+    const baca = new FileReader();
+    baca.onload = ev=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const skala = Math.min(1, maksPx/Math.max(img.width,img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width*skala); c.height = Math.round(img.height*skala);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        c.toBlob(b=> b?selesai(b):gagal(new Error('kompres gagal')), 'image/jpeg', kualitas);
+      };
+      img.onerror = gagal; img.src = ev.target.result;
+    };
+    baca.onerror = gagal; baca.readAsDataURL(file);
+  });
+}
+function gdToken(){
+  return new Promise(async (ok, gagal)=>{
+    try{
+      if(!window.google || !google.accounts || !google.accounts.oauth2){
+        await new Promise((muat, gagalMuat)=>{
+          const s = document.createElement('script');
+          s.src = 'https://accounts.google.com/gsi/client';
+          s.onload = muat; s.onerror = gagalMuat;
+          document.head.appendChild(s);
+        });
+      }
+      if(GOOGLE.token && Date.now() < GOOGLE.tokenSampai - 60000){ ok(GOOGLE.token); return; }
+      const klien = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE.id,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: res=>{
+          if(res && res.access_token){ GOOGLE.token = res.access_token; GOOGLE.tokenSampai = Date.now() + (res.expires_in||3600)*1000; ok(res.access_token); }
+          else gagal(new Error(res && res.error ? res.error : 'izin ditolak'));
+        },
+        error_callback: err=>gagal(new Error(err && err.type ? err.type : 'izin gagal'))
+      });
+      klien.requestAccessToken();
+    }catch(err){ gagal(err); }
+  });
+}
+async function gdUnggah(blob, namaFile){
+  const t = await gdToken();
+  if(!GOOGLE.folderId){
+    const cari = await fetch("https://www.googleapis.com/drive/v3/files?q=" + encodeURIComponent("name='Arsip Sekolah' and mimeType='application/vnd.google-apps.folder' and trashed=false") + "&fields=files(id)", {headers:{Authorization:'Bearer '+t}}).then(r=>r.json());
+    GOOGLE.folderId = (cari.files && cari.files[0]) ? cari.files[0].id : '';
+    if(!GOOGLE.folderId){
+      const buat = await fetch('https://www.googleapis.com/drive/v3/files', {method:'POST', headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'}, body:JSON.stringify({name:'Arsip Sekolah', mimeType:'application/vnd.google-apps.folder'})}).then(r=>r.json());
+      GOOGLE.folderId = buat.id || '';
+    }
+  }
+  const batas = 'gbArsip' + Date.now();
+  const meta = JSON.stringify({name:namaFile, ...(GOOGLE.folderId ? {parents:[GOOGLE.folderId]} : {})});
+  const badan = new Blob(['--'+batas+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+batas+'\r\nContent-Type: '+(blob.type||'image/jpeg')+'\r\n\r\n', blob, '\r\n--'+batas+'--'], {type:'multipart/related; boundary='+batas});
+  const unggah = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {method:'POST', headers:{Authorization:'Bearer '+t}, body:badan});
+  if(!unggah.ok) throw new Error('unggah gagal');
+  const hasil = await unggah.json();
+  await fetch('https://www.googleapis.com/drive/v3/files/'+hasil.id+'/permissions', {method:'POST', headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'}, body:JSON.stringify({role:'reader', type:'anyone'})});
+  return 'https://drive.google.com/uc?export=view&id=' + hasil.id;
+}
+async function gbGambarKeUrl(file, maksPx, kualitas){
+  const blob = await gbKompresBlob(file, maksPx, kualitas);
+  if(GOOGLE.id){
+    try{ return await gdUnggah(blob, 'soal-' + Date.now() + '.jpg'); }
+    catch(_){ toast('⚠️ Google Drive gagal — gambar disimpan di database.'); }
+  }
+  return await new Promise((ok, gagal)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>ok(fr.result);
+    fr.onerror = gagal;
+    fr.readAsDataURL(blob);
   });
 }
 async function ambilNugBaru(){
@@ -4355,7 +4448,7 @@ async function modBuatSoal(isi){
   el('bsFileOpsi').onchange = async e=>{
     const f = e.target.files[0]; if(!f || !opsiTarget) return;
     toast('⏳ Memproses gambar…');
-    try{ BS.opsiGbr[opsiTarget] = await gbKompresFoto(f, 500, .55); gambarThumbOpsi(opsiTarget); toast('🖼️ Gambar ditempel di pilihan '+opsiTarget.toUpperCase()); }
+    try{ BS.opsiGbr[opsiTarget] = await gbGambarKeUrl(f, GOOGLE.id?800:500, GOOGLE.id?.7:.55); gambarThumbOpsi(opsiTarget); toast('🖼️ Gambar ditempel di pilihan '+opsiTarget.toUpperCase()); }
     catch(_){ toast('⛔ Gambar gagal diproses.'); }
     e.target.value='';
   };
@@ -4371,7 +4464,7 @@ async function modBuatSoal(isi){
     const f = e.target.files[0]; if(!f) return;
     toast('⏳ Memproses gambar…');
     try{
-      const url = await gbKompresFoto(f, 700, .55);
+      const url = await gbGambarKeUrl(f, GOOGLE.id?1200:700, GOOGLE.id?.75:.55);
       const ed = el('bsTeks');
       if(teksKursor && ed.contains(teksKursor.startContainer)){
         const s2 = window.getSelection(); s2.removeAllRanges(); s2.addRange(teksKursor.cloneRange());
