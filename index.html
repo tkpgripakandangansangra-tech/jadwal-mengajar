@@ -2150,6 +2150,9 @@ async function modPengaturan(isi){
       </div>
       <div class="barisAtas" id="stKopChip" style="margin-bottom:8px;flex-wrap:wrap"></div>
       <div id="stKop" class="bsKertas serif" contenteditable="true" style="min-height:200px"></div>
+      <p class="kecil" style="margin:12px 0 4px"><b>Baris data pada lembar soal</b> — tanda " : " otomatis lurus. Atur urutannya dengan ⬆⬇, pindah kolom kiri/kanan dengan ⬅️➡️, dan hapus baris yang tidak diinginkan sekolah (mis. Materi) dengan 🗑.</p>
+      <div id="stKopBaris"></div>
+      <button type="button" id="stKopBarisTambah" class="btn kecil" style="margin-top:4px">➕ Tambah Baris</button>
       <button type="button" id="stKopSimpan" class="btn utama" style="margin-top:10px">💾 Simpan Kop</button>
     </div>
     </div>
@@ -2199,6 +2202,7 @@ async function modPengaturan(isi){
   };
   // kop soal ujian (operator)
   el('stKop').innerHTML = (SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar('atas');
+  let kopBarisState = (Array.isArray(SEKOLAH.KopBaris) && SEKOLAH.KopBaris.length) ? SEKOLAH.KopBaris.map(b=>({...b})) : kopBarisStandar();
   const kopToken = [['NAMA_SEKOLAH','Nama Sekolah'],['ALAMAT','Alamat'],['TA','Th. Ajaran'],['JUDUL_UJIAN','Judul Ujian'],['MAPEL','Mapel'],['KELAS','Kelas'],['SEMESTER','Semester'],['MATERI','Materi (diisi guru)'],['NAMA_SISWA','Nama Siswa'],['NIS','NIS']];
   el('stKopChip').innerHTML = kopToken.map(t=>`<button type="button" class="btn kecil" data-koptoken="[${t[0]}]" style="font-size:11px">+ ${t[1]}</button>`).join('');
   el('stKopChip').onclick = e=>{
@@ -2244,12 +2248,39 @@ async function modPengaturan(isi){
     const b = el('stKopSimpan'); b.disabled = true;
     try{
       const kop = el('stKop').innerHTML;
-      await updateDoc(doc(db,'sekolah',AKUN.SekolahId), {KopSoal:kop});
-      SEKOLAH = {...SEKOLAH, KopSoal:kop};
+      await updateDoc(doc(db,'sekolah',AKUN.SekolahId), {KopSoal:kop, KopBaris:kopBarisState});
+      SEKOLAH = {...SEKOLAH, KopSoal:kop, KopBaris:kopBarisState};
       toast('✅ Kop soal tersimpan — dipakai seragam di semua lembar soal ujian');
     }catch(err){ toast('⛔ '+teksErr(err)); }
     finally{ b.disabled = false; }
   };
+  const kopBarisRender = ()=>{
+    const opsi = [['MAPEL','Mapel'],['KELAS','Kelas'],['SEMESTER','Semester'],['KELAS_SEMESTER','Kelas / Semester'],['MATERI','Materi (diisi guru)'],['NAMA_SISWA','Nama Siswa (kosong)'],['NIS','NIS (kosong)'],['KOTAK','Kotak kosong (nilai dll.)'],['TEKS','Teks bebas']];
+    el('stKopBaris').innerHTML = kopBarisState.map((b,i)=>`<div class="barisAtas" style="gap:6px;margin-bottom:6px;align-items:center;flex-wrap:nowrap">
+        <button type="button" class="btn kecil" data-kbs="${i}" title="Pindah kolom kiri/kanan">${b.S==='kanan'?'➡️':'⬅️'}</button>
+        <input data-kbl="${i}" value="${esc(b.L||'')}" placeholder="Label (mis. Mata Pelajaran :)" style="flex:1;min-width:130px">
+        <select data-kbv="${i}" style="max-width:180px">${opsi.map(o=>`<option value="${o[0]}"${b.V===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select>
+        <input data-kbt="${i}" value="${esc(b.T||'')}" placeholder="teks bebas" style="max-width:120px" ${b.V==='TEKS'?'':'hidden'}>
+        <button type="button" class="btn kecil" data-kbup="${i}" title="Naik">⬆</button>
+        <button type="button" class="btn kecil" data-kbdown="${i}" title="Turun">⬇</button>
+        <button type="button" class="btn kecil bahaya" data-kbdel="${i}" title="Hapus baris ini">🗑</button>
+      </div>`).join('');
+  };
+  kopBarisRender();
+  el('stKopBaris').oninput = e=>{
+    const t = e.target;
+    if('kbl' in t.dataset) kopBarisState[+t.dataset.kbl].L = t.value;
+    if('kbt' in t.dataset) kopBarisState[+t.dataset.kbt].T = t.value;
+    if('kbv' in t.dataset){ kopBarisState[+t.dataset.kbv].V = t.value; kopBarisRender(); }
+  };
+  el('stKopBaris').onclick = e=>{
+    const b = e.target.closest('button'); if(!b) return;
+    if('kbs' in b.dataset){ const i = +b.dataset.kbs; kopBarisState[i].S = kopBarisState[i].S==='kanan' ? 'kiri' : 'kanan'; kopBarisRender(); }
+    else if('kbup' in b.dataset){ const i = +b.dataset.kbup; if(i>0){ const [x] = kopBarisState.splice(i,1); kopBarisState.splice(i-1,0,x); kopBarisRender(); } }
+    else if('kbdown' in b.dataset){ const i = +b.dataset.kbdown; if(i<kopBarisState.length-1){ const [x] = kopBarisState.splice(i,1); kopBarisState.splice(i+1,0,x); kopBarisRender(); } }
+    else if('kbdel' in b.dataset){ const i = +b.dataset.kbdel; kopBarisState.splice(i,1); kopBarisRender(); toast('🗑 Baris dihapus — klik 💾 Simpan Kop agar berlaku'); }
+  };
+  el('stKopBarisTambah').onclick = ()=>{ kopBarisState.push({L:'', V:'TEKS', T:'', S:'kiri'}); kopBarisRender(); };
   // kursi kepala sekolah
   const ksEmail = SEKOLAH.EmailKepalaSekolah || '';
   const ksAkun = GURU.find(g=>g.Peran==='kepala_sekolah');
@@ -4363,30 +4394,59 @@ function kopSoalStandar(mode){
     </div>`;
   }
   return kepala + `
-    <div style="text-align:center;font-weight:700;font-size:15px;margin-bottom:10px">[JUDUL_UJIAN]</div>
-    <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">
-      <tr style="border-top:1.5px solid #111">
-        <td style="padding:4px 6px;white-space:nowrap">Mata Pelajaran :</td>
-        <td style="padding:4px 6px"><b>[MAPEL]</b></td>
-        <td style="width:70px;padding:4px 6px">Nama :</td>
-        <td style="padding:4px 6px">[NAMA_SISWA]</td>
-      </tr>
-      <tr>
-        <td style="padding:4px 6px">Materi :</td>
-        <td style="padding:4px 6px">[MATERI]</td>
-        <td style="padding:4px 6px">NIS :</td>
-        <td style="padding:4px 6px">[NIS]</td>
-      </tr>
-      <tr style="border-bottom:1.5px solid #111">
-        <td style="padding:4px 6px">Kelas / Semester :</td>
-        <td style="padding:4px 6px"><b>[KELAS] / [SEMESTER]</b></td>
-        <td style="padding:4px 6px">Nilai :</td>
-        <td style="padding:4px 6px"><span style="display:inline-block;width:64px;border:1.5px solid #111;height:20px;vertical-align:middle"></span></td>
-      </tr>
-    </table>`;
+    <div style="text-align:center;font-weight:700;font-size:15px;margin-bottom:10px">[JUDUL_UJIAN]</div>`;
+}
+function kopBarisStandar(){
+  return [
+    {L:'Mata Pelajaran :', V:'MAPEL', S:'kiri'},
+    {L:'Nama :', V:'NAMA_SISWA', S:'kanan'},
+    {L:'Materi :', V:'MATERI', S:'kiri'},
+    {L:'NIS :', V:'NIS', S:'kanan'},
+    {L:'Kelas / Semester :', V:'KELAS_SEMESTER', S:'kiri'},
+    {L:'Nilai :', V:'KOTAK', S:'kanan'}
+  ];
+}
+function kopIsiNilai(b, d, bisaEdit){
+  const jenis = d.Jenis || d.jenis || 'UTS';
+  const smt = String(d.Semester || (jenis==='UTS'?'Ganjil':'Genap'));
+  const m = String(d.Materi || d.materi || '');
+  switch(b.V){
+    case 'MAPEL': return `<b>${esc(d.Mapel || d.mapel || '—')}</b>`;
+    case 'KELAS': return `<b>${esc(d.NamaKelas || '—')}</b>`;
+    case 'SEMESTER': return `<b>${esc(smt)}</b>`;
+    case 'KELAS_SEMESTER': return `<b>${esc(d.NamaKelas || '—')} / ${esc(smt)}</b>`;
+    case 'MATERI': return bisaEdit ? `<span class="bsMateri" contenteditable="true" data-ph="materi yang diujikan — diisi guru">${m}</span>` : (m ? (m.includes('<') ? m : esc(m)) : '……………………');
+    case 'NAMA_SISWA': return '...........................';
+    case 'NIS': return '...................';
+    case 'KOTAK': return '<span style="display:inline-block;width:64px;border:1.5px solid #111;height:20px;vertical-align:middle"></span>';
+    case 'TEKS': return esc(b.T || '');
+    default: return esc(b.V || '');
+  }
+}
+function kopTabelBaris(d, bisaEdit){
+  const baris = (Array.isArray(SEKOLAH.KopBaris) && SEKOLAH.KopBaris.length) ? SEKOLAH.KopBaris : kopBarisStandar();
+  const kolom = {kiri:[], kanan:[]};
+  baris.forEach(b=>{ ((b.S==='kanan') ? kolom.kanan : kolom.kiri).push(b); });
+  const n = Math.max(kolom.kiri.length, kolom.kanan.length);
+  let barisHtml = '';
+  for(let i=0;i<n;i++){
+    const tepi = (i===0 ? 'border-top:1.5px solid #111;' : '') + (i===n-1 ? 'border-bottom:1.5px solid #111;' : '');
+    const sel = x=>{
+      const b = kolom[x][i];
+      return b
+        ? `<td style="width:118px;text-align:right;white-space:nowrap;padding:4px 6px 4px 0;${tepi}">${esc(b.L||'')}</td><td style="padding:4px 8px 4px 4px;${tepi}">${kopIsiNilai(b, d, bisaEdit)}</td>`
+        : `<td colspan="2" style="${tepi}"></td>`;
+    };
+    barisHtml += `<tr>${sel('kiri')}${sel('kanan')}</tr>`;
+  }
+  return `<table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">${barisHtml}</table>`;
 }
 function kopSoalHtml(d, bisaEdit){
-  const t = String((SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar('atas'));
+  let t = String((SEKOLAH.KopSoal||'').trim() ? SEKOLAH.KopSoal : kopSoalStandar('atas'));
+  const buang = document.createElement('div');
+  buang.innerHTML = t;
+  buang.querySelectorAll('table').forEach(tb=>{ const tx = tb.textContent||''; if(tx.includes('Mata Pelajaran') || tx.includes('[MAPEL]')) tb.remove(); });
+  t = buang.innerHTML;
   const jenis = d.Jenis || d.jenis || 'UTS';
   const smt = String(d.Semester || (jenis==='UTS'?'Ganjil':'Genap'));
   const materi = String(d.Materi || d.materi || '');
@@ -4403,7 +4463,8 @@ function kopSoalHtml(d, bisaEdit){
       ? `<span class="bsMateri" contenteditable="true" data-ph="materi yang diujikan — diisi guru">${materi}</span>`
       : (materi ? (materi.includes('<') ? materi : esc(materi)) : '……………………'))
     .replace(/\[NAMA_SISWA\]/g, '...........................')
-    .replace(/\[NIS\]/g, '...................');
+    .replace(/\[NIS\]/g, '...................')
+    + kopTabelBaris(d, bisaEdit);
 }
 function buangKopLama(t){
   const tmp = document.createElement('div');
